@@ -545,7 +545,7 @@ class Fitter():
             self.set_fuse(f"{mc_name}.fb_mux", "comb")
             self.set_fuse(f"{mc_name}.xor_a_mux", "sum")
             self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
-            self.set_fuse(f"{mc_name}.xor_invert", "on")
+            self.set_fuse(f"{mc_name}.xor_invert", "off")
 
         # Now that we've mapped inputs to outputs,
         # add them to the inputs and clear out the outputs.
@@ -674,6 +674,8 @@ if __name__ == "__main__":
 
     p = Fitter()
     output_jed = sys.argv[1]
+    if not output_jed.endswith(".jed"):
+        raise SystemExit("First file is not a .jed file.")
     arm = False
 
     if len(sys.argv) < 3:
@@ -742,3 +744,7 @@ if __name__ == "__main__":
     if fuses != orig_fuses:
         with open(output_jed, "w") as f:
             write_jed(f, fuses, comment=jed_comment)
+
+    if not arm:
+        print("Warning: the PLA is still in safe mode. Remember to add 'arm' to the end of "
+              "the command line to take the PLA out of safe mode.")
