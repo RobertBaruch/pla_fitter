@@ -1,0 +1,9 @@
+# Special xor layer 1
+.xor
+.i 2
+.o 1
+.ilb p q
+.ob  x
+.p 1
+11 1
+.e

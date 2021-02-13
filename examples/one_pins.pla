@@ -1,0 +1,11 @@
+# Special pins layer
+.device ATF1502AS PLCC44
+.pins
+.i 1
+.o 1
+.ilb p
+.ob x
+.p 0
+.pin p 4
+.pin x 6
+.e

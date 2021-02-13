@@ -1,0 +1,15 @@
+Very simple fitter for the ATF15xx series of CPLDs.
+
+Usage: python3 pla_fitter.py <output-jed-file> <pla-files>...
+
+The first PLA file should be a pin file, which specifies the names of pins of input and output signals.
+
+Then the next PLA files should contain logic. An xor file consists only of 2-input XOR gates, and any other file consists only of AND-OR logic.
+
+Registers are not supported. In fact, many things are not supported. Only combinatorial layers of AND-OR and XOR gates are supported.
+
+See the top of pla_filter.py for information about the PLA file formats.
+
+Prerequisites:
+
+You must have bitarray, munkres, and pyeda installed via pip3, and also you must have checked out the prjbureau repo (https://github.com/whitequark/prjbureau) and added the repo to your PYTHONPATH.
