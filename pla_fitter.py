@@ -5,7 +5,7 @@ import pprint
 import sys
 import textwrap
 
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 
 from munkres import Munkres, make_cost_matrix, DISALLOWED, print_matrix
@@ -315,7 +315,6 @@ class PLAParser():
 class Fitter():
     inputs: List[str]
     or_terms: Dict[str, OrTerm]
-    all_or_terms: Dict[str, Dict[str, OrTerm]]
     input_mcs: Dict[str, int]
     input_sigs: Dict[str, str]
 
@@ -333,7 +332,6 @@ class Fitter():
         # A map of symbolic output to OrTerm
         self.or_terms = {}
         # A map of block to map of MC to OrTerm
-        self.all_or_terms = {}
         self.all_or_exprs = {}
 
         # A map of symbolic input to macrocell number
@@ -402,19 +400,34 @@ class Fitter():
 
         self.pinned_outputs = {s: self.input_mcs[s] for s in self.outputs}
 
+        # Reversing the list MAY help in getting consecutive macrocells
+        # to take advantage of the cascade function. This assumes that we
+        # got the list from the database in ascending macrocell order.
+        self.available_mcs = self.available_mcs[::-1]
         print(f"Available MCs are: {self.available_mcs}")
 
-        # Initialize blocks in all_or_terms
+        # Initialize blocks in all_or_exprs
         for block in self.device["blocks"].keys():
-            self.all_or_terms[block] = {}
             self.all_or_exprs[block] = {}
 
-    def get_next_mc(self) -> str:
+    def get_next_mc(self) -> Optional[str]:
         if len(self.available_mcs) == 0:
             return None
         next_mc = self.available_mcs[0]
         self.available_mcs.remove(next_mc)
         return next_mc
+
+    def can_cascade(self, mc_from: str, mc_to: str) -> bool:
+        # The FROM MC can cascade to the TO MC if and only if
+        # FROM is numerically previous to TO, and FROM is not
+        # at the end of an 8-MC section.
+        mc_from_n = int(mc_from)
+        mc_to_n = int(mc_to)
+        if mc_to_n != mc_from_n + 1:
+            return False
+        if (mc_from_n % 8) == 7:
+            return False
+        return True
 
     def map_and_or_layer(self):
         print("Mapping AND-OR layer")
@@ -425,77 +438,123 @@ class Fitter():
             or_expr = or_term.expr
             inv = False
             print(f"{output} = {or_term.expr}")
+
+            or_exprs = [or_expr]
+
             if isinstance(or_expr, pyeda.boolalg.expr.OrOp) and len(or_expr.xs) > 5:
                 # Maybe we can invert, and then use the macrocell's inverter to invert
                 # the result?
-                nor_expr = espresso_exprs(Not(or_term.expr).to_dnf())
+                nor_expr = espresso_exprs(Not(or_expr).to_dnf())
                 # espresso_expr returns a tuple
                 # to_dnf converts an expression to disjunctive normal form
                 # (i.e. sum of products).
                 nor_expr = nor_expr[0].to_dnf()
-                print(f"Try the inverse of this instead: {nor_expr}")
-                if isinstance(nor_expr, pyeda.boolalg.expr.OrOp) and len(or_expr.xs) > 5:
-                    raise SystemExit(
-                        f"ERROR: or-term for {output} needs more than"
-                        " one macrocell (5 products), which is not supported yet.")
-                or_expr = nor_expr
-                inv = True
+                print(
+                    f"  More than 5 OR terms. Trying the inverse of this instead ({nor_expr})")
+                if isinstance(nor_expr, pyeda.boolalg.expr.OrOp) and len(nor_expr.xs) > 5:
+                    # Try to use multiple MCs. If they turn out to be not cascadable,
+                    # that's OK, we can just pipe the output of one to the input of
+                    # the other.
+                    print(
+                        f"  Still more than 5 OR terms. Let's just add more macrocells.")
+                    # Split up the OR inputs into groups of 4.
+                    terms = [t for t in or_expr.xs]
+                    termgroups = [terms[i:i+4]
+                                  for i in range(0, len(terms), 4)]
+                    or_exprs = [Or(*terms) for terms in termgroups]
+                    # If the last group is len 1, then we can add it to the penultimate
+                    # group because we don't need to chain.
+                    if len(termgroups[-1]) == 1:
+                        terms = termgroups[-1] + termgroups[-2]
+                        or_exprs[-2] = Or(*terms)
+                        or_exprs = or_exprs[:-1]
 
-            if output in self.pinned_outputs:
-                mc = self.pinned_outputs[output]
-            else:
-                mc = self.get_next_mc()
-            if mc is None:
-                raise SystemExit("Ran out of macrocells")
+                else:
+                    or_exprs = [nor_expr]
+                    inv = True
 
-            mc_name = f"MC{mc}"
-            macrocell = device["macrocells"][mc_name]
-            block = macrocell["block"]
-            print(f"output {output} mapped to {mc_name}.FB in block {block}")
-            self.all_or_terms[block][mc_name] = or_term
-            self.all_or_exprs[block][mc_name] = or_expr
-            self.input_mcs[output] = mc
-            self.input_sigs[output] = f"MC{mc}_FB"
+            mcs = []
+            for i in range(len(or_exprs)):
+                if len(mcs) == 0 and output in self.pinned_outputs:
+                    next_mc = self.pinned_outputs[output]
+                else:
+                    next_mc = self.get_next_mc()
+                if next_mc is None:
+                    raise SystemExit("Ran out of macrocells")
+                mcs.append(next_mc)
 
-            if or_term.expr.is_one():
-                self.set_fuse(f"{mc_name}.pt_power", "on")
-                self.set_fuse(f"{mc_name}.pt1_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt2_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt3_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt4_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt5_mux", "sum")
-                self.set_fuse(f"{mc_name}.fb_mux", "comb")
-                self.set_fuse(f"{mc_name}.xor_a_mux", "VCC_pt2")
-                self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
-                self.set_fuse(f"{mc_name}.xor_invert", "on")
-            elif or_term.expr.is_zero():
-                self.set_fuse(f"{mc_name}.pt_power", "on")
-                self.set_fuse(f"{mc_name}.pt1_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt2_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt3_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt4_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt5_mux", "sum")
-                self.set_fuse(f"{mc_name}.fb_mux", "comb")
-                self.set_fuse(f"{mc_name}.xor_a_mux", "VCC_pt2")
-                self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
-                self.set_fuse(f"{mc_name}.xor_invert", "off")
-            else:
-                self.set_fuse(f"{mc_name}.pt_power", "on")
-                self.set_fuse(f"{mc_name}.pt1_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt2_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt3_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt4_mux", "sum")
-                self.set_fuse(f"{mc_name}.pt5_mux", "sum")
-                self.set_fuse(f"{mc_name}.fb_mux", "comb")
-                self.set_fuse(f"{mc_name}.xor_a_mux", "sum")
-                self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
+            prev_mc_name = None
+            prev_block = None
+            for i, mc in enumerate(mcs):
+                or_expr = or_exprs[i]
+                mc_name = f"MC{mc}"
+                macrocell = device["macrocells"][mc_name]
+                block = macrocell["block"]
+                if i == 0:
+                    sig = output
+                    print(
+                        f"output {output} mapped to {mc_name}.FB in block {block}")
+                else:
+                    sig = f"__{mc_name}_FB"
+                    print(
+                        f"Intermediate output {sig} mapped to {mc_name}.FB in block {block}")
+                    self.inputs.append(sig)
 
-                # It's weird, but because we have to feed a 1 into one input of
-                # the macrocell's XOR, it naturally inverts. There's another
-                # optional inverter after that, so if we want the non-inverted
-                # output of the OR gate, we have to turn that inverter on!
-                self.set_fuse(f"{mc_name}.xor_invert",
-                              f"{'off' if inv else 'on'}")
+                # If we need to chain
+                if i != 0:
+                    prev_or_expr = self.all_or_exprs[prev_block][prev_mc_name]
+                    terms = [t for t in prev_or_expr.xs]
+                    terms.append(sig)
+                    self.all_or_exprs[prev_block][prev_mc_name] = Or(*terms)
+                    print(
+                        f"Chained previous {prev_mc_name}, now {self.all_or_exprs[prev_block][prev_mc_name]}")
+                print(f"Macrocell {mc_name} or expr: {or_expr}")
+
+                prev_mc_name = mc_name
+                prev_block = block
+                self.all_or_exprs[block][mc_name] = or_expr
+                self.input_mcs[sig] = mc
+                self.input_sigs[sig] = f"MC{mc}_FB"
+
+                if or_term.expr.is_one():
+                    self.set_fuse(f"{mc_name}.pt_power", "on")
+                    self.set_fuse(f"{mc_name}.pt1_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt2_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt3_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt4_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt5_mux", "sum")
+                    self.set_fuse(f"{mc_name}.fb_mux", "comb")
+                    self.set_fuse(f"{mc_name}.xor_a_mux", "VCC_pt2")
+                    self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
+                    self.set_fuse(f"{mc_name}.xor_invert", "on")
+                elif or_term.expr.is_zero():
+                    self.set_fuse(f"{mc_name}.pt_power", "on")
+                    self.set_fuse(f"{mc_name}.pt1_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt2_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt3_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt4_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt5_mux", "sum")
+                    self.set_fuse(f"{mc_name}.fb_mux", "comb")
+                    self.set_fuse(f"{mc_name}.xor_a_mux", "VCC_pt2")
+                    self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
+                    self.set_fuse(f"{mc_name}.xor_invert", "off")
+                else:
+                    self.set_fuse(f"{mc_name}.pt_power", "on")
+                    self.set_fuse(f"{mc_name}.pt1_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt2_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt3_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt4_mux", "sum")
+                    self.set_fuse(f"{mc_name}.pt5_mux", "sum")
+                    self.set_fuse(f"{mc_name}.fb_mux", "comb")
+                    self.set_fuse(f"{mc_name}.xor_a_mux", "sum")
+                    self.set_fuse(f"{mc_name}.xor_b_mux", "VCC_pt12")
+
+                    # It's weird, but because we have to feed a 1 into one input of
+                    # the macrocell's XOR, it naturally inverts. There's another
+                    # optional inverter after that, so if we want the non-inverted
+                    # output of the OR gate, we have to turn that inverter on!
+                    self.set_fuse(f"{mc_name}.xor_invert",
+                                  f"{'off' if inv else 'on'}")
 
         # Now that we've mapped inputs to outputs,
         # add them to the inputs and clear out the outputs.

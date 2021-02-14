@@ -1,0 +1,17 @@
+# This example is a 6-input or gate, which has to
+# be spread out across two macrocells.
+.device ATF1502AS PLCC44
+.pins
+.i 6
+.o 1
+.ilb a b c d e f
+.ob x
+.p 0
+.pin a 4
+.pin b 5
+.pin c 6
+.pin d 8
+.pin e 9
+.pin f 11
+.pin x 12
+.e
