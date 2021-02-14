@@ -1,0 +1,25 @@
+.device ATF1502AS PLCC44
+.pins
+.i 17
+.o 1
+.ilb q[0] q[1] q[2] q[3] q[4] q[5] q[6] q[7] n_oe p[0] p[1] p[2] p[3] p[4] p[5] p[6] p[7]
+.ob p_neq_q
+.pin p[0] 4
+.pin p[1] 5
+.pin p[2] 6
+.pin p[3] 8
+.pin p[4] 9
+.pin p[5] 11
+.pin p[6] 12
+.pin p[7] 14
+.pin q[0] 16
+.pin q[1] 17
+.pin q[2] 18
+.pin q[3] 19
+.pin q[4] 20
+.pin q[5] 21
+.pin q[6] 24
+.pin q[7] 25
+.pin n_oe 26
+.pin p_neq_q 27
+.e
