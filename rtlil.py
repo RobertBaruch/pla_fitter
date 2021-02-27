@@ -3,7 +3,7 @@ import string
 import sys
 
 
-from typing import List, Optional, Tuple, Any, Union, Dict
+from typing import List, Optional, Tuple, Any, Union, Dict, TYPE_CHECKING
 
 # Run antlr4 -Dlanguage=Python3 rtlil.g4
 
@@ -49,7 +49,16 @@ class ConstString(Const):
         return self.val
 
 
-class AttributeMixin:
+if TYPE_CHECKING:
+    class Attributes:
+        def __init__(self):
+            self.attrs: Dict[str, Const] = {}
+    attribute_mixin_base = Attributes
+else:
+    attribute_mixin_base = object
+
+
+class AttributeMixin(attribute_mixin_base):
     def add_attribute(self, id: str, c: Const):
         if len(id) == 0 or (id[0] != '\\' and id[0] != '$'):
             raise SystemError("Invalid id. Must start with \\ or $")
@@ -60,7 +69,16 @@ class AttributeMixin:
         return "".join([f"{indents}attribute {k} {v}\n" for k, v in self.attrs.items()])
 
 
-class ParameterMixin:
+if TYPE_CHECKING:
+    class Parameters:
+        def __init__(self):
+            self.params: Dict[str, Optional[Const]] = {}
+    parameter_mixin_base = Parameters
+else:
+    parameter_mixin_base = object
+
+
+class ParameterMixin(parameter_mixin_base):
     def add_param(self, id: str, c: Optional[Const] = None):
         if len(id) == 0 or (id[0] != '\\' and id[0] != '$'):
             raise SystemError("Invalid id. Must start with \\ or $")
@@ -133,8 +151,8 @@ class Case(AttributeMixin):
     def __init__(self, compares: List[SigSpec], attrs: Dict[str, Const]):
         self.attrs = attrs
         self.compares = compares
-        self.switches = []
-        self.assignments = []
+        self.switches: List[Switch] = []
+        self.assignments: List[Assignment] = []
 
     def add_switch(self, s: "Switch"):
         self.switches.append(s)
@@ -161,7 +179,7 @@ class Switch(AttributeMixin):
     def __init__(self, sig_spec: SigSpec, attrs: Dict[str, Const]):
         self.sig_spec = sig_spec
         self.attrs = attrs
-        self.cases = []
+        self.cases: List[Case] = []
 
     def add_case(self, c: Case):
         self.cases.append(c)
@@ -185,7 +203,7 @@ class Cell(AttributeMixin, ParameterMixin):
         self.typ = typ
         self.attrs = attrs
         self.params = {}
-        self.ports = {}
+        self.ports: Dict[str, SigSpec] = {}
 
     def add_port(self, id: str, sig_spec: SigSpec):
         self.ports[id] = sig_spec
@@ -202,10 +220,10 @@ class Sync:
     def __init__(self, typ: str, sig_spec: Optional[SigSpec] = None):
         self.typ = typ
         self.sig_spec = sig_spec
-        self.updates = []
+        self.updates: List[Assignment] = []
 
     def add_update(self, s: Assignment):
-        self.updates.add(s)
+        self.updates.append(s)
 
     def __str__(self) -> str:
         updates = "".join(
@@ -221,9 +239,9 @@ class Process(AttributeMixin):
     def __init__(self, id: str, attrs: Dict[str, Const]):
         self.id = id
         self.attrs = attrs
-        self.assignments = []
-        self.syncs = []
-        self.switch = None
+        self.assignments: List[Assignment] = []
+        self.syncs: List[Sync] = []
+        self.switch: Optional[Switch] = None
 
     def add_assignment(self, s: Assignment):
         self.assignments.append(s)
@@ -231,7 +249,7 @@ class Process(AttributeMixin):
     def add_sync(self, s: Sync):
         self.syncs.append(s)
 
-    def set_switch(self, s: Switch):
+    def set_switch(self, s: Optional[Switch]):
         self.switch = s
 
     def __str__(self) -> str:
@@ -247,10 +265,10 @@ class Module(AttributeMixin, ParameterMixin):
         self.id = id
         self.attrs = attrs
         self.params = {}
-        self.wires = []
-        self.connections = []
-        self.cells = []
-        self.processes = []
+        self.wires: List[Wire] = []
+        self.connections: List[Connection] = []
+        self.cells: List[Cell] = []
+        self.processes: List[Process] = []
 
     def add_wire(self, w: Wire):
         self.wires.append(w)
@@ -263,6 +281,9 @@ class Module(AttributeMixin, ParameterMixin):
 
     def add_process(self, p: Process):
         self.processes.append(p)
+
+    def cells_of_type(self, t: str) -> List[Cell]:
+        return [c for c in self.cells if c.typ == t]
 
     def __str__(self) -> str:
         attrs = self._attrs_str(0)
