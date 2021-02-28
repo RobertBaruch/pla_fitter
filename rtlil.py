@@ -2,35 +2,40 @@ import re
 import string
 import sys
 
-
-from typing import List, Optional, Tuple, Any, Union, Dict, TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import List, Optional, Tuple, Any, Union, Dict, TYPE_CHECKING, cast
 
 # Run antlr4 -Dlanguage=Python3 rtlil.g4
 
 
-class Const:
-    pass
+class Const(ABC):
+    @abstractmethod
+    def size(self) -> int:
+        pass
 
 
 class ConstValue(Const):
     def __init__(self, val: str):
-        self.size = 0
+        self.width = 0
         self.val = ""
         pieces = val.split("'")
         self.set_value(int(pieces[0]), pieces[1])
 
-    def set_value(self, size: int, val: str):
-        if len(val) != size:
+    def set_value(self, width: int, val: str):
+        if len(val) != width:
             raise SystemError(
-                f"Size of const ({size}) does not match length of value ({len(val)})")
+                f"Width of const ({width}) does not match length of value ({len(val)})")
         if not re.fullmatch("[01xzm-]*", val):
             raise SystemError(
                 f"Value for const must only contain characters in the set [01xzm-].")
-        self.size = size
+        self.width = width
         self.val = val
 
     def __str__(self) -> str:
-        return f"{self.size}'{self.val}"
+        return f"{self.width}'{self.val}"
+
+    def size(self) -> int:
+        return self.width
 
 
 class ConstInt(Const):
@@ -40,6 +45,9 @@ class ConstInt(Const):
     def __str__(self) -> str:
         return f"{self.i}"
 
+    def size(self) -> int:
+        return 32
+
 
 class ConstString(Const):
     def __init__(self, val: str):
@@ -47,6 +55,9 @@ class ConstString(Const):
 
     def __str__(self) -> str:
         return self.val
+
+    def size(self) -> int:
+        return len(self.val)
 
 
 if TYPE_CHECKING:
@@ -97,7 +108,7 @@ class ParameterMixin(parameter_mixin_base):
 
 
 class Wire(AttributeMixin):
-    def __init__(self, id: str, attrs: Dict[str, Const], options: Dict[str, int]):
+    def __init__(self, id: str, attrs: Dict[str, Const], options: Dict[str, int] = {}):
         self.id = id
         self.attrs = attrs
         self.options = options
@@ -107,22 +118,105 @@ class Wire(AttributeMixin):
         opts = "".join([f"{k} {v} " for k, v in self.options.items()])
         return f"{attrs}  wire {opts}{self.id}\n"
 
+    def size(self) -> int:
+        return self.options.get("width", 1)
+
 
 class SigSpec:
-    def __init__(self, typ: str, val: Any):
+    def __init__(self, typ: str, val: Union[Const, List["SigSpec"], Wire, Tuple["SigSpec", int, Optional[int]]]):
         self.typ = typ
         self.val = val
 
+        if self.typ == "const":
+            if not isinstance(self.val, Const):
+                raise SystemError(
+                    "Sigspec specified as const, but value is not Const")
+
+        elif self.typ == "wire":
+            if not isinstance(self.val, Wire):
+                raise SystemError(
+                    "Sigspec specified as wire, but value is not Wire")
+
+        elif self.typ == "concat":
+            if not isinstance(self.val, List):
+                raise SystemError(
+                    "Sigspec specified as slice, but value is not List")
+
+        elif self.typ == "slice":
+            if not isinstance(self.val, tuple) or len(self.val) != 3:
+                raise SystemError(
+                    "Sigspec specified as concat, but value is not tuple of size 3")
+
+        else:
+            raise SystemError(
+                f"SigSpec of type '{typ}' is not const, wire, slice, or concat")
+
     def __str__(self) -> str:
-        if self.typ == "const" or self.typ == "id":
+        if self.typ == "const":
             return f"{self.val}"
+
+        if self.typ == "wire":
+            w: Wire = cast(Wire, self.val)
+            return f"{w.id}"
+
         if self.typ == "slice":
-            end = f":{self.val[2]}" if self.val[2] is not None else ""
-            return f"{self.val[0]} [{self.val[1]}{end}]"
+            t: Tuple[SigSpec, int, Optional[int]] = cast(
+                Tuple[SigSpec, int, Optional[int]], self.val)
+            end = f":{t[2]}" if t[2] is not None else ""
+            return f"{t[0]} [{t[1]}{end}]"
+
         if self.typ == "concat":
-            ss = " ".join([f"{s}" for s in self.val])
+            l: List[SigSpec] = cast(List[SigSpec], self.val)
+            ss = " ".join([f"{s}" for s in l])
             return "{" + ss + "}"
+
         raise SystemError(f"Unknown type for sigspec: {self.typ}")
+
+    def bits(self) -> List["SigSpec"]:
+        """Returns a list of SigSpecs guaranteed to be one bit wide."""
+        s = self.size()
+        if s == 1:
+            return [self]
+        return [SigSpec.slice(self, i) for i in range(s)]
+
+    def size(self) -> int:
+        """Returns the size in bits of this sigspec."""
+        if self.typ == "const":
+            c: Const = cast(Const, self.val)
+            return c.size()
+
+        if self.typ == "wire":
+            w: Wire = cast(Wire, self.val)
+            return w.size()
+
+        if self.typ == "slice":
+            sl: Tuple[SigSpec, int, int] = cast(
+                Tuple[SigSpec, int, int], self.val)
+            if sl[1] is None:
+                return 1
+            return sl[2] - sl[1]
+
+        s: int = 0
+        l: List[SigSpec] = cast(List[SigSpec], self.val)
+        for v in l:
+            s += v.size()
+        return s
+
+    @ classmethod
+    def const(cls, c: Const) -> "SigSpec":
+        return SigSpec("const", c)
+
+    @ classmethod
+    def slice(cls, s: "SigSpec", start: int, end: Optional[int] = None) -> "SigSpec":
+        return SigSpec("slice", (s, start, end))
+
+    @ classmethod
+    def wire(cls, w: "Wire") -> "SigSpec":
+        return SigSpec("wire", w)
+
+    @ classmethod
+    def concat(cls, ss: List["SigSpec"]) -> "SigSpec":
+        return SigSpec("concat", ss)
 
 
 class Assignment:
@@ -148,7 +242,7 @@ class Connection:
 
 
 class Case(AttributeMixin):
-    def __init__(self, compares: List[SigSpec], attrs: Dict[str, Const]):
+    def __init__(self, compares: List[SigSpec], attrs: Dict[str, Const] = {}):
         self.attrs = attrs
         self.compares = compares
         self.switches: List[Switch] = []
@@ -176,7 +270,7 @@ class Case(AttributeMixin):
 
 
 class Switch(AttributeMixin):
-    def __init__(self, sig_spec: SigSpec, attrs: Dict[str, Const]):
+    def __init__(self, sig_spec: SigSpec, attrs: Dict[str, Const] = {}):
         self.sig_spec = sig_spec
         self.attrs = attrs
         self.cases: List[Case] = []
@@ -198,14 +292,14 @@ class Switch(AttributeMixin):
 
 
 class Cell(AttributeMixin, ParameterMixin):
-    def __init__(self, id: str, typ: str, attrs: Dict[str, Const]):
+    def __init__(self, typ: str, id: str, attrs: Dict[str, Const] = {}):
         self.id = id
         self.typ = typ
         self.attrs = attrs
         self.params = {}
         self.ports: Dict[str, SigSpec] = {}
 
-    def add_port(self, id: str, sig_spec: SigSpec):
+    def set_port(self, id: str, sig_spec: SigSpec):
         self.ports[id] = sig_spec
 
     def __str__(self) -> str:
@@ -236,7 +330,7 @@ class Sync:
 
 
 class Process(AttributeMixin):
-    def __init__(self, id: str, attrs: Dict[str, Const]):
+    def __init__(self, id: str, attrs: Dict[str, Const] = {}):
         self.id = id
         self.attrs = attrs
         self.assignments: List[Assignment] = []
@@ -261,35 +355,54 @@ class Process(AttributeMixin):
 
 
 class Module(AttributeMixin, ParameterMixin):
-    def __init__(self, id: str, attrs: Dict[str, Const]):
+    def __init__(self, id: str, attrs: Dict[str, Const] = {}):
         self.id = id
         self.attrs = attrs
-        self.params = {}
-        self.wires: List[Wire] = []
+        self.params: Dict[str, Optional[Const]] = {}
+        self.wires: Dict[str, Wire] = {}
         self.connections: List[Connection] = []
-        self.cells: List[Cell] = []
-        self.processes: List[Process] = []
+        self.cells: Dict[str, Cell] = {}
+        self.processes: Dict[str, Process] = {}
 
     def add_wire(self, w: Wire):
-        self.wires.append(w)
+        self.wires[w.id] = w
 
     def add_connection(self, c: Connection):
         self.connections.append(c)
 
     def add_cell(self, c: Cell):
-        self.cells.append(c)
+        self.cells[c.id] = c
 
     def add_process(self, p: Process):
-        self.processes.append(p)
+        self.processes[p.id] = p
 
     def cells_of_type(self, t: str) -> List[Cell]:
-        return [c for c in self.cells if c.typ == t]
+        return [c for c in self.cells.values() if c.typ == t]
+
+    def id_exists(self, id: str) -> bool:
+        return id in self.wires or id in self.cells or id in self.processes
+
+    def uniquify(self, id: str, index: int = 0) -> str:
+        """Returns a module-unique ID for the given ID."""
+        if len(id) == 0 or (id[0] != '\\' and id[0] != '$'):
+            raise SystemError("Invalid id. Must start with \\ or $")
+
+        if index == 0:
+            if not self.id_exists(id):
+                return id
+            index += 1
+
+        while True:
+            new_name = f"{id}_{index}"
+            if not self.id_exists(new_name):
+                return new_name
+            index += 1
 
     def __str__(self) -> str:
         attrs = self._attrs_str(0)
         params = self._params_str(1)
-        wires = "".join([f"{w}" for w in self.wires])
-        cells = "".join([f"{c}" for c in self.cells])
-        procs = "".join([f"{p}" for p in self.processes])
-        connects = "".join([f"  {c}" for c in self.connections])
+        wires = "".join([str(w) for w in self.wires.values()])
+        cells = "".join([str(c) for c in self.cells.values()])
+        procs = "".join([str(p) for p in self.processes.values()])
+        connects = "".join(["  " + str(c) for c in self.connections])
         return f"{attrs}module {self.id}\n{params}{wires}{cells}{procs}{connects}end\n"

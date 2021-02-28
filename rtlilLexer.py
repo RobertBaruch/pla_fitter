@@ -4,7 +4,11 @@ from io import StringIO
 from typing.io import TextIO
 import sys
 
+
 from rtlil import *
+
+curr_module = None
+
 
 
 def serializedATN():

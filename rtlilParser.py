@@ -8,173 +8,179 @@ if sys.version_info[1] > 5:
 else:
 	from typing.io import TextIO
 
+
 from rtlil import *
+
+curr_module = None
+
 
 def serializedATN():
     with StringIO() as buf:
         buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3,")
-        buf.write("\u016f\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
+        buf.write("\u0174\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
         buf.write("\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31")
         buf.write("\t\31\3\2\3\2\5\2\65\n\2\3\2\3\2\3\2\7\2:\n\2\f\2\16\2")
         buf.write("=\13\2\3\2\3\2\3\3\3\3\3\3\3\3\3\4\3\4\3\4\3\4\3\4\3\4")
-        buf.write("\3\4\3\4\3\4\3\5\3\5\3\5\3\5\3\5\3\5\3\5\3\5\3\5\3\5\3")
-        buf.write("\5\3\5\3\5\7\5[\n\5\f\5\16\5^\13\5\3\6\3\6\3\6\3\6\3\6")
-        buf.write("\3\6\5\6f\n\6\3\6\3\6\3\7\3\7\3\7\3\7\3\7\3\7\7\7p\n\7")
-        buf.write("\f\7\16\7s\13\7\3\7\3\7\3\7\3\7\3\b\3\b\3\b\3\b\3\b\3")
+        buf.write("\3\4\3\4\3\4\3\4\3\4\3\5\3\5\3\5\3\5\3\5\3\5\3\5\3\5\3")
+        buf.write("\5\3\5\3\5\3\5\3\5\7\5]\n\5\f\5\16\5`\13\5\3\6\3\6\3\6")
+        buf.write("\3\6\3\6\3\6\5\6h\n\6\3\6\3\6\3\7\3\7\3\7\3\7\3\7\3\7")
+        buf.write("\7\7r\n\7\f\7\16\7u\13\7\3\7\3\7\3\7\3\7\3\b\3\b\3\b\3")
         buf.write("\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b\3\b")
-        buf.write("\5\b\u008c\n\b\3\t\3\t\3\t\3\t\3\t\3\t\3\n\3\n\3\n\3\n")
-        buf.write("\3\n\3\n\3\n\3\n\3\n\3\n\3\n\5\n\u009f\n\n\3\n\3\n\3\n")
-        buf.write("\3\n\3\n\5\n\u00a6\n\n\3\n\3\n\7\n\u00aa\n\n\f\n\16\n")
-        buf.write("\u00ad\13\n\3\13\3\13\3\13\3\13\7\13\u00b3\n\13\f\13\16")
-        buf.write("\13\u00b6\13\13\3\f\3\f\3\f\3\f\3\f\3\f\3\f\7\f\u00bf")
-        buf.write("\n\f\f\f\16\f\u00c2\13\f\3\f\3\f\3\f\3\r\3\r\5\r\u00c9")
-        buf.write("\n\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\5\r\u00d6")
-        buf.write("\n\r\3\16\3\16\3\16\3\16\3\16\3\16\3\16\3\16\7\16\u00e0")
-        buf.write("\n\16\f\16\16\16\u00e3\13\16\3\16\3\16\3\16\5\16\u00e8")
-        buf.write("\n\16\3\16\3\16\3\16\7\16\u00ed\n\16\f\16\16\16\u00f0")
-        buf.write("\13\16\3\16\3\16\3\16\7\16\u00f5\n\16\f\16\16\16\u00f8")
-        buf.write("\13\16\3\16\3\16\3\16\3\17\3\17\3\17\3\17\3\17\3\17\3")
-        buf.write("\17\3\17\7\17\u0105\n\17\f\17\16\17\u0108\13\17\3\17\3")
-        buf.write("\17\3\17\3\20\3\20\3\20\3\20\3\20\3\20\3\20\3\20\3\20")
-        buf.write("\3\20\3\20\7\20\u0118\n\20\f\20\16\20\u011b\13\20\3\21")
-        buf.write("\3\21\3\21\3\21\3\21\3\21\3\21\7\21\u0124\n\21\f\21\16")
-        buf.write("\21\u0127\13\21\5\21\u0129\n\21\3\22\3\22\3\22\3\22\3")
-        buf.write("\22\7\22\u0130\n\22\f\22\16\22\u0133\13\22\3\23\3\23\3")
+        buf.write("\3\b\3\b\5\b\u008e\n\b\3\t\3\t\3\t\3\t\3\t\3\t\3\n\3\n")
+        buf.write("\3\n\3\n\3\n\3\n\3\n\3\n\3\n\3\n\3\n\3\n\3\n\3\n\5\n\u00a4")
+        buf.write("\n\n\3\n\3\n\3\n\3\n\3\n\5\n\u00ab\n\n\3\n\3\n\7\n\u00af")
+        buf.write("\n\n\f\n\16\n\u00b2\13\n\3\13\3\13\3\13\3\13\7\13\u00b8")
+        buf.write("\n\13\f\13\16\13\u00bb\13\13\3\f\3\f\3\f\3\f\3\f\3\f\3")
+        buf.write("\f\7\f\u00c4\n\f\f\f\16\f\u00c7\13\f\3\f\3\f\3\f\3\r\3")
+        buf.write("\r\5\r\u00ce\n\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3\r\3")
+        buf.write("\r\3\r\5\r\u00db\n\r\3\16\3\16\3\16\3\16\3\16\3\16\3\16")
+        buf.write("\3\16\7\16\u00e5\n\16\f\16\16\16\u00e8\13\16\3\16\3\16")
+        buf.write("\3\16\5\16\u00ed\n\16\3\16\3\16\3\16\7\16\u00f2\n\16\f")
+        buf.write("\16\16\16\u00f5\13\16\3\16\3\16\3\16\7\16\u00fa\n\16\f")
+        buf.write("\16\16\16\u00fd\13\16\3\16\3\16\3\16\3\17\3\17\3\17\3")
+        buf.write("\17\3\17\3\17\3\17\3\17\7\17\u010a\n\17\f\17\16\17\u010d")
+        buf.write("\13\17\3\17\3\17\3\17\3\20\3\20\3\20\3\20\3\20\3\20\3")
+        buf.write("\20\3\20\3\20\3\20\3\20\7\20\u011d\n\20\f\20\16\20\u0120")
+        buf.write("\13\20\3\21\3\21\3\21\3\21\3\21\3\21\3\21\7\21\u0129\n")
+        buf.write("\21\f\21\16\21\u012c\13\21\5\21\u012e\n\21\3\22\3\22\3")
+        buf.write("\22\3\22\3\22\7\22\u0135\n\22\f\22\16\22\u0138\13\22\3")
         buf.write("\23\3\23\3\23\3\23\3\23\3\23\3\23\3\23\3\23\3\23\3\23")
-        buf.write("\3\23\3\23\3\23\3\23\3\23\5\23\u0147\n\23\3\24\3\24\3")
-        buf.write("\25\3\25\3\25\3\25\3\25\3\25\3\26\3\26\3\26\3\26\3\26")
-        buf.write("\3\26\3\27\3\27\3\27\3\27\7\27\u015b\n\27\f\27\16\27\u015e")
-        buf.write("\13\27\3\30\3\30\3\30\3\30\3\30\3\30\3\30\3\31\3\31\3")
-        buf.write("\31\3\31\3\31\3\31\5\31\u016d\n\31\3\31\2\3\22\32\2\4")
-        buf.write("\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\2\4\4")
-        buf.write("\2\16\16\26\26\3\2\37#\2\u017d\2\62\3\2\2\2\4@\3\2\2\2")
-        buf.write("\6D\3\2\2\2\b\\\3\2\2\2\n_\3\2\2\2\fi\3\2\2\2\16\u008b")
-        buf.write("\3\2\2\2\20\u008d\3\2\2\2\22\u009e\3\2\2\2\24\u00ae\3")
-        buf.write("\2\2\2\26\u00b7\3\2\2\2\30\u00d5\3\2\2\2\32\u00d7\3\2")
-        buf.write("\2\2\34\u00fc\3\2\2\2\36\u010c\3\2\2\2 \u011c\3\2\2\2")
-        buf.write("\"\u012a\3\2\2\2$\u0146\3\2\2\2&\u0148\3\2\2\2(\u014a")
-        buf.write("\3\2\2\2*\u0150\3\2\2\2,\u0156\3\2\2\2.\u015f\3\2\2\2")
-        buf.write("\60\u016c\3\2\2\2\62\64\b\2\1\2\63\65\5\4\3\2\64\63\3")
-        buf.write("\2\2\2\64\65\3\2\2\2\65;\3\2\2\2\66\67\5\6\4\2\678\b\2")
-        buf.write("\1\28:\3\2\2\29\66\3\2\2\2:=\3\2\2\2;9\3\2\2\2;<\3\2\2")
-        buf.write("\2<>\3\2\2\2=;\3\2\2\2>?\7\2\2\3?\3\3\2\2\2@A\7\3\2\2")
-        buf.write("AB\7*\2\2BC\7+\2\2C\5\3\2\2\2DE\5,\27\2EF\7\4\2\2FG\7")
-        buf.write("(\2\2GH\7+\2\2HI\b\4\1\2IJ\5\b\5\2JK\7\5\2\2KL\7+\2\2")
-        buf.write("L\7\3\2\2\2M[\5\n\6\2NO\5\f\7\2OP\b\5\1\2P[\3\2\2\2QR")
-        buf.write("\5\20\t\2RS\b\5\1\2S[\3\2\2\2TU\5\26\f\2UV\b\5\1\2V[\3")
-        buf.write("\2\2\2WX\5\32\16\2XY\b\5\1\2Y[\3\2\2\2ZM\3\2\2\2ZN\3\2")
-        buf.write("\2\2ZQ\3\2\2\2ZT\3\2\2\2ZW\3\2\2\2[^\3\2\2\2\\Z\3\2\2")
-        buf.write("\2\\]\3\2\2\2]\t\3\2\2\2^\\\3\2\2\2_`\7\6\2\2`a\7(\2\2")
-        buf.write("ae\b\6\1\2bc\5\60\31\2cd\b\6\1\2df\3\2\2\2eb\3\2\2\2e")
-        buf.write("f\3\2\2\2fg\3\2\2\2gh\7+\2\2h\13\3\2\2\2ij\b\7\1\2jk\5")
-        buf.write(",\27\2kq\7\7\2\2lm\5\16\b\2mn\b\7\1\2np\3\2\2\2ol\3\2")
-        buf.write("\2\2ps\3\2\2\2qo\3\2\2\2qr\3\2\2\2rt\3\2\2\2sq\3\2\2\2")
-        buf.write("tu\7(\2\2uv\7+\2\2vw\b\7\1\2w\r\3\2\2\2xy\7\b\2\2yz\7")
-        buf.write("*\2\2z\u008c\b\b\1\2{|\7\t\2\2|}\7*\2\2}\u008c\b\b\1\2")
-        buf.write("~\177\7\n\2\2\177\u0080\7*\2\2\u0080\u008c\b\b\1\2\u0081")
-        buf.write("\u0082\7\13\2\2\u0082\u0083\7*\2\2\u0083\u008c\b\b\1\2")
-        buf.write("\u0084\u0085\7\f\2\2\u0085\u0086\7*\2\2\u0086\u008c\b")
-        buf.write("\b\1\2\u0087\u0088\7\r\2\2\u0088\u008c\b\b\1\2\u0089\u008a")
-        buf.write("\7\16\2\2\u008a\u008c\b\b\1\2\u008bx\3\2\2\2\u008b{\3")
-        buf.write("\2\2\2\u008b~\3\2\2\2\u008b\u0081\3\2\2\2\u008b\u0084")
-        buf.write("\3\2\2\2\u008b\u0087\3\2\2\2\u008b\u0089\3\2\2\2\u008c")
-        buf.write("\17\3\2\2\2\u008d\u008e\7\17\2\2\u008e\u008f\5\22\n\2")
-        buf.write("\u008f\u0090\5\22\n\2\u0090\u0091\7+\2\2\u0091\u0092\b")
-        buf.write("\t\1\2\u0092\21\3\2\2\2\u0093\u0094\b\n\1\2\u0094\u0095")
-        buf.write("\5\60\31\2\u0095\u0096\b\n\1\2\u0096\u009f\3\2\2\2\u0097")
-        buf.write("\u0098\7(\2\2\u0098\u009f\b\n\1\2\u0099\u009a\7\23\2\2")
-        buf.write("\u009a\u009b\5\24\13\2\u009b\u009c\7\24\2\2\u009c\u009d")
-        buf.write("\b\n\1\2\u009d\u009f\3\2\2\2\u009e\u0093\3\2\2\2\u009e")
-        buf.write("\u0097\3\2\2\2\u009e\u0099\3\2\2\2\u009f\u00ab\3\2\2\2")
-        buf.write("\u00a0\u00a1\f\4\2\2\u00a1\u00a2\7\20\2\2\u00a2\u00a5")
-        buf.write("\7*\2\2\u00a3\u00a4\7\21\2\2\u00a4\u00a6\7*\2\2\u00a5")
-        buf.write("\u00a3\3\2\2\2\u00a5\u00a6\3\2\2\2\u00a6\u00a7\3\2\2\2")
-        buf.write("\u00a7\u00a8\7\22\2\2\u00a8\u00aa\b\n\1\2\u00a9\u00a0")
-        buf.write("\3\2\2\2\u00aa\u00ad\3\2\2\2\u00ab\u00a9\3\2\2\2\u00ab")
-        buf.write("\u00ac\3\2\2\2\u00ac\23\3\2\2\2\u00ad\u00ab\3\2\2\2\u00ae")
-        buf.write("\u00b4\b\13\1\2\u00af\u00b0\5\22\n\2\u00b0\u00b1\b\13")
-        buf.write("\1\2\u00b1\u00b3\3\2\2\2\u00b2\u00af\3\2\2\2\u00b3\u00b6")
-        buf.write("\3\2\2\2\u00b4\u00b2\3\2\2\2\u00b4\u00b5\3\2\2\2\u00b5")
-        buf.write("\25\3\2\2\2\u00b6\u00b4\3\2\2\2\u00b7\u00b8\5,\27\2\u00b8")
-        buf.write("\u00b9\7\25\2\2\u00b9\u00ba\7(\2\2\u00ba\u00bb\7(\2\2")
-        buf.write("\u00bb\u00bc\7+\2\2\u00bc\u00c0\b\f\1\2\u00bd\u00bf\5")
-        buf.write("\30\r\2\u00be\u00bd\3\2\2\2\u00bf\u00c2\3\2\2\2\u00c0")
-        buf.write("\u00be\3\2\2\2\u00c0\u00c1\3\2\2\2\u00c1\u00c3\3\2\2\2")
-        buf.write("\u00c2\u00c0\3\2\2\2\u00c3\u00c4\7\5\2\2\u00c4\u00c5\7")
-        buf.write("+\2\2\u00c5\27\3\2\2\2\u00c6\u00c8\7\6\2\2\u00c7\u00c9")
-        buf.write("\t\2\2\2\u00c8\u00c7\3\2\2\2\u00c8\u00c9\3\2\2\2\u00c9")
-        buf.write("\u00ca\3\2\2\2\u00ca\u00cb\7(\2\2\u00cb\u00cc\5\60\31")
-        buf.write("\2\u00cc\u00cd\7+\2\2\u00cd\u00ce\b\r\1\2\u00ce\u00d6")
-        buf.write("\3\2\2\2\u00cf\u00d0\7\17\2\2\u00d0\u00d1\7(\2\2\u00d1")
-        buf.write("\u00d2\5\22\n\2\u00d2\u00d3\7+\2\2\u00d3\u00d4\b\r\1\2")
-        buf.write("\u00d4\u00d6\3\2\2\2\u00d5\u00c6\3\2\2\2\u00d5\u00cf\3")
-        buf.write("\2\2\2\u00d6\31\3\2\2\2\u00d7\u00d8\5,\27\2\u00d8\u00d9")
-        buf.write("\7\27\2\2\u00d9\u00da\7(\2\2\u00da\u00db\7+\2\2\u00db")
-        buf.write("\u00e1\b\16\1\2\u00dc\u00dd\5*\26\2\u00dd\u00de\b\16\1")
-        buf.write("\2\u00de\u00e0\3\2\2\2\u00df\u00dc\3\2\2\2\u00e0\u00e3")
-        buf.write("\3\2\2\2\u00e1\u00df\3\2\2\2\u00e1\u00e2\3\2\2\2\u00e2")
-        buf.write("\u00e7\3\2\2\2\u00e3\u00e1\3\2\2\2\u00e4\u00e5\5\34\17")
-        buf.write("\2\u00e5\u00e6\b\16\1\2\u00e6\u00e8\3\2\2\2\u00e7\u00e4")
-        buf.write("\3\2\2\2\u00e7\u00e8\3\2\2\2\u00e8\u00ee\3\2\2\2\u00e9")
-        buf.write("\u00ea\5*\26\2\u00ea\u00eb\b\16\1\2\u00eb\u00ed\3\2\2")
-        buf.write("\2\u00ec\u00e9\3\2\2\2\u00ed\u00f0\3\2\2\2\u00ee\u00ec")
-        buf.write("\3\2\2\2\u00ee\u00ef\3\2\2\2\u00ef\u00f6\3\2\2\2\u00f0")
-        buf.write("\u00ee\3\2\2\2\u00f1\u00f2\5\"\22\2\u00f2\u00f3\b\16\1")
-        buf.write("\2\u00f3\u00f5\3\2\2\2\u00f4\u00f1\3\2\2\2\u00f5\u00f8")
-        buf.write("\3\2\2\2\u00f6\u00f4\3\2\2\2\u00f6\u00f7\3\2\2\2\u00f7")
-        buf.write("\u00f9\3\2\2\2\u00f8\u00f6\3\2\2\2\u00f9\u00fa\7\5\2\2")
-        buf.write("\u00fa\u00fb\7+\2\2\u00fb\33\3\2\2\2\u00fc\u00fd\5,\27")
-        buf.write("\2\u00fd\u00fe\7\30\2\2\u00fe\u00ff\5\22\n\2\u00ff\u0100")
-        buf.write("\7+\2\2\u0100\u0106\b\17\1\2\u0101\u0102\5\36\20\2\u0102")
-        buf.write("\u0103\b\17\1\2\u0103\u0105\3\2\2\2\u0104\u0101\3\2\2")
-        buf.write("\2\u0105\u0108\3\2\2\2\u0106\u0104\3\2\2\2\u0106\u0107")
-        buf.write("\3\2\2\2\u0107\u0109\3\2\2\2\u0108\u0106\3\2\2\2\u0109")
-        buf.write("\u010a\7\5\2\2\u010a\u010b\7+\2\2\u010b\35\3\2\2\2\u010c")
-        buf.write("\u010d\5,\27\2\u010d\u010e\7\31\2\2\u010e\u010f\5 \21")
-        buf.write("\2\u010f\u0110\7+\2\2\u0110\u0119\b\20\1\2\u0111\u0112")
-        buf.write("\5\34\17\2\u0112\u0113\b\20\1\2\u0113\u0118\3\2\2\2\u0114")
-        buf.write("\u0115\5*\26\2\u0115\u0116\b\20\1\2\u0116\u0118\3\2\2")
-        buf.write("\2\u0117\u0111\3\2\2\2\u0117\u0114\3\2\2\2\u0118\u011b")
-        buf.write("\3\2\2\2\u0119\u0117\3\2\2\2\u0119\u011a\3\2\2\2\u011a")
-        buf.write("\37\3\2\2\2\u011b\u0119\3\2\2\2\u011c\u0128\b\21\1\2\u011d")
-        buf.write("\u011e\5\22\n\2\u011e\u0125\b\21\1\2\u011f\u0120\7\32")
-        buf.write("\2\2\u0120\u0121\5\22\n\2\u0121\u0122\b\21\1\2\u0122\u0124")
-        buf.write("\3\2\2\2\u0123\u011f\3\2\2\2\u0124\u0127\3\2\2\2\u0125")
-        buf.write("\u0123\3\2\2\2\u0125\u0126\3\2\2\2\u0126\u0129\3\2\2\2")
-        buf.write("\u0127\u0125\3\2\2\2\u0128\u011d\3\2\2\2\u0128\u0129\3")
-        buf.write("\2\2\2\u0129!\3\2\2\2\u012a\u012b\5$\23\2\u012b\u0131")
-        buf.write("\b\22\1\2\u012c\u012d\5(\25\2\u012d\u012e\b\22\1\2\u012e")
-        buf.write("\u0130\3\2\2\2\u012f\u012c\3\2\2\2\u0130\u0133\3\2\2\2")
-        buf.write("\u0131\u012f\3\2\2\2\u0131\u0132\3\2\2\2\u0132#\3\2\2")
-        buf.write("\2\u0133\u0131\3\2\2\2\u0134\u0135\7\33\2\2\u0135\u0136")
-        buf.write("\5&\24\2\u0136\u0137\5\22\n\2\u0137\u0138\7+\2\2\u0138")
-        buf.write("\u0139\b\23\1\2\u0139\u0147\3\2\2\2\u013a\u013b\7\33\2")
-        buf.write("\2\u013b\u013c\7\34\2\2\u013c\u013d\7+\2\2\u013d\u0147")
-        buf.write("\b\23\1\2\u013e\u013f\7\33\2\2\u013f\u0140\7\35\2\2\u0140")
-        buf.write("\u0141\7+\2\2\u0141\u0147\b\23\1\2\u0142\u0143\7\33\2")
-        buf.write("\2\u0143\u0144\7\36\2\2\u0144\u0145\7+\2\2\u0145\u0147")
-        buf.write("\b\23\1\2\u0146\u0134\3\2\2\2\u0146\u013a\3\2\2\2\u0146")
-        buf.write("\u013e\3\2\2\2\u0146\u0142\3\2\2\2\u0147%\3\2\2\2\u0148")
-        buf.write("\u0149\t\3\2\2\u0149\'\3\2\2\2\u014a\u014b\7$\2\2\u014b")
-        buf.write("\u014c\5\22\n\2\u014c\u014d\5\22\n\2\u014d\u014e\7+\2")
-        buf.write("\2\u014e\u014f\b\25\1\2\u014f)\3\2\2\2\u0150\u0151\7%")
-        buf.write("\2\2\u0151\u0152\5\22\n\2\u0152\u0153\5\22\n\2\u0153\u0154")
-        buf.write("\7+\2\2\u0154\u0155\b\26\1\2\u0155+\3\2\2\2\u0156\u015c")
-        buf.write("\b\27\1\2\u0157\u0158\5.\30\2\u0158\u0159\b\27\1\2\u0159")
-        buf.write("\u015b\3\2\2\2\u015a\u0157\3\2\2\2\u015b\u015e\3\2\2\2")
-        buf.write("\u015c\u015a\3\2\2\2\u015c\u015d\3\2\2\2\u015d-\3\2\2")
-        buf.write("\2\u015e\u015c\3\2\2\2\u015f\u0160\7&\2\2\u0160\u0161")
-        buf.write("\7(\2\2\u0161\u0162\b\30\1\2\u0162\u0163\5\60\31\2\u0163")
-        buf.write("\u0164\b\30\1\2\u0164\u0165\7+\2\2\u0165/\3\2\2\2\u0166")
-        buf.write("\u0167\7)\2\2\u0167\u016d\b\31\1\2\u0168\u0169\7*\2\2")
-        buf.write("\u0169\u016d\b\31\1\2\u016a\u016b\7\'\2\2\u016b\u016d")
-        buf.write("\b\31\1\2\u016c\u0166\3\2\2\2\u016c\u0168\3\2\2\2\u016c")
-        buf.write("\u016a\3\2\2\2\u016d\61\3\2\2\2\35\64;Z\\eq\u008b\u009e")
-        buf.write("\u00a5\u00ab\u00b4\u00c0\u00c8\u00d5\u00e1\u00e7\u00ee")
-        buf.write("\u00f6\u0106\u0117\u0119\u0125\u0128\u0131\u0146\u015c")
-        buf.write("\u016c")
+        buf.write("\3\23\3\23\3\23\3\23\3\23\3\23\3\23\5\23\u014c\n\23\3")
+        buf.write("\24\3\24\3\25\3\25\3\25\3\25\3\25\3\25\3\26\3\26\3\26")
+        buf.write("\3\26\3\26\3\26\3\27\3\27\3\27\3\27\7\27\u0160\n\27\f")
+        buf.write("\27\16\27\u0163\13\27\3\30\3\30\3\30\3\30\3\30\3\30\3")
+        buf.write("\30\3\31\3\31\3\31\3\31\3\31\3\31\5\31\u0172\n\31\3\31")
+        buf.write("\2\3\22\32\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$")
+        buf.write("&(*,.\60\2\4\4\2\16\16\26\26\3\2\37#\2\u0182\2\62\3\2")
+        buf.write("\2\2\4@\3\2\2\2\6D\3\2\2\2\b^\3\2\2\2\na\3\2\2\2\fk\3")
+        buf.write("\2\2\2\16\u008d\3\2\2\2\20\u008f\3\2\2\2\22\u00a3\3\2")
+        buf.write("\2\2\24\u00b3\3\2\2\2\26\u00bc\3\2\2\2\30\u00da\3\2\2")
+        buf.write("\2\32\u00dc\3\2\2\2\34\u0101\3\2\2\2\36\u0111\3\2\2\2")
+        buf.write(" \u0121\3\2\2\2\"\u012f\3\2\2\2$\u014b\3\2\2\2&\u014d")
+        buf.write("\3\2\2\2(\u014f\3\2\2\2*\u0155\3\2\2\2,\u015b\3\2\2\2")
+        buf.write(".\u0164\3\2\2\2\60\u0171\3\2\2\2\62\64\b\2\1\2\63\65\5")
+        buf.write("\4\3\2\64\63\3\2\2\2\64\65\3\2\2\2\65;\3\2\2\2\66\67\5")
+        buf.write("\6\4\2\678\b\2\1\28:\3\2\2\29\66\3\2\2\2:=\3\2\2\2;9\3")
+        buf.write("\2\2\2;<\3\2\2\2<>\3\2\2\2=;\3\2\2\2>?\7\2\2\3?\3\3\2")
+        buf.write("\2\2@A\7\3\2\2AB\7*\2\2BC\7+\2\2C\5\3\2\2\2DE\b\4\1\2")
+        buf.write("EF\5,\27\2FG\7\4\2\2GH\7(\2\2HI\7+\2\2IJ\b\4\1\2JK\b\4")
+        buf.write("\1\2KL\5\b\5\2LM\7\5\2\2MN\7+\2\2N\7\3\2\2\2O]\5\n\6\2")
+        buf.write("PQ\5\f\7\2QR\b\5\1\2R]\3\2\2\2ST\5\20\t\2TU\b\5\1\2U]")
+        buf.write("\3\2\2\2VW\5\26\f\2WX\b\5\1\2X]\3\2\2\2YZ\5\32\16\2Z[")
+        buf.write("\b\5\1\2[]\3\2\2\2\\O\3\2\2\2\\P\3\2\2\2\\S\3\2\2\2\\")
+        buf.write("V\3\2\2\2\\Y\3\2\2\2]`\3\2\2\2^\\\3\2\2\2^_\3\2\2\2_\t")
+        buf.write("\3\2\2\2`^\3\2\2\2ab\7\6\2\2bc\7(\2\2cg\b\6\1\2de\5\60")
+        buf.write("\31\2ef\b\6\1\2fh\3\2\2\2gd\3\2\2\2gh\3\2\2\2hi\3\2\2")
+        buf.write("\2ij\7+\2\2j\13\3\2\2\2kl\b\7\1\2lm\5,\27\2ms\7\7\2\2")
+        buf.write("no\5\16\b\2op\b\7\1\2pr\3\2\2\2qn\3\2\2\2ru\3\2\2\2sq")
+        buf.write("\3\2\2\2st\3\2\2\2tv\3\2\2\2us\3\2\2\2vw\7(\2\2wx\7+\2")
+        buf.write("\2xy\b\7\1\2y\r\3\2\2\2z{\7\b\2\2{|\7*\2\2|\u008e\b\b")
+        buf.write("\1\2}~\7\t\2\2~\177\7*\2\2\177\u008e\b\b\1\2\u0080\u0081")
+        buf.write("\7\n\2\2\u0081\u0082\7*\2\2\u0082\u008e\b\b\1\2\u0083")
+        buf.write("\u0084\7\13\2\2\u0084\u0085\7*\2\2\u0085\u008e\b\b\1\2")
+        buf.write("\u0086\u0087\7\f\2\2\u0087\u0088\7*\2\2\u0088\u008e\b")
+        buf.write("\b\1\2\u0089\u008a\7\r\2\2\u008a\u008e\b\b\1\2\u008b\u008c")
+        buf.write("\7\16\2\2\u008c\u008e\b\b\1\2\u008dz\3\2\2\2\u008d}\3")
+        buf.write("\2\2\2\u008d\u0080\3\2\2\2\u008d\u0083\3\2\2\2\u008d\u0086")
+        buf.write("\3\2\2\2\u008d\u0089\3\2\2\2\u008d\u008b\3\2\2\2\u008e")
+        buf.write("\17\3\2\2\2\u008f\u0090\7\17\2\2\u0090\u0091\5\22\n\2")
+        buf.write("\u0091\u0092\5\22\n\2\u0092\u0093\7+\2\2\u0093\u0094\b")
+        buf.write("\t\1\2\u0094\21\3\2\2\2\u0095\u0096\b\n\1\2\u0096\u0097")
+        buf.write("\5\60\31\2\u0097\u0098\b\n\1\2\u0098\u00a4\3\2\2\2\u0099")
+        buf.write("\u009a\7(\2\2\u009a\u009b\b\n\1\2\u009b\u009c\b\n\1\2")
+        buf.write("\u009c\u009d\b\n\1\2\u009d\u00a4\b\n\1\2\u009e\u009f\7")
+        buf.write("\23\2\2\u009f\u00a0\5\24\13\2\u00a0\u00a1\7\24\2\2\u00a1")
+        buf.write("\u00a2\b\n\1\2\u00a2\u00a4\3\2\2\2\u00a3\u0095\3\2\2\2")
+        buf.write("\u00a3\u0099\3\2\2\2\u00a3\u009e\3\2\2\2\u00a4\u00b0\3")
+        buf.write("\2\2\2\u00a5\u00a6\f\4\2\2\u00a6\u00a7\7\20\2\2\u00a7")
+        buf.write("\u00aa\7*\2\2\u00a8\u00a9\7\21\2\2\u00a9\u00ab\7*\2\2")
+        buf.write("\u00aa\u00a8\3\2\2\2\u00aa\u00ab\3\2\2\2\u00ab\u00ac\3")
+        buf.write("\2\2\2\u00ac\u00ad\7\22\2\2\u00ad\u00af\b\n\1\2\u00ae")
+        buf.write("\u00a5\3\2\2\2\u00af\u00b2\3\2\2\2\u00b0\u00ae\3\2\2\2")
+        buf.write("\u00b0\u00b1\3\2\2\2\u00b1\23\3\2\2\2\u00b2\u00b0\3\2")
+        buf.write("\2\2\u00b3\u00b9\b\13\1\2\u00b4\u00b5\5\22\n\2\u00b5\u00b6")
+        buf.write("\b\13\1\2\u00b6\u00b8\3\2\2\2\u00b7\u00b4\3\2\2\2\u00b8")
+        buf.write("\u00bb\3\2\2\2\u00b9\u00b7\3\2\2\2\u00b9\u00ba\3\2\2\2")
+        buf.write("\u00ba\25\3\2\2\2\u00bb\u00b9\3\2\2\2\u00bc\u00bd\5,\27")
+        buf.write("\2\u00bd\u00be\7\25\2\2\u00be\u00bf\7(\2\2\u00bf\u00c0")
+        buf.write("\7(\2\2\u00c0\u00c1\7+\2\2\u00c1\u00c5\b\f\1\2\u00c2\u00c4")
+        buf.write("\5\30\r\2\u00c3\u00c2\3\2\2\2\u00c4\u00c7\3\2\2\2\u00c5")
+        buf.write("\u00c3\3\2\2\2\u00c5\u00c6\3\2\2\2\u00c6\u00c8\3\2\2\2")
+        buf.write("\u00c7\u00c5\3\2\2\2\u00c8\u00c9\7\5\2\2\u00c9\u00ca\7")
+        buf.write("+\2\2\u00ca\27\3\2\2\2\u00cb\u00cd\7\6\2\2\u00cc\u00ce")
+        buf.write("\t\2\2\2\u00cd\u00cc\3\2\2\2\u00cd\u00ce\3\2\2\2\u00ce")
+        buf.write("\u00cf\3\2\2\2\u00cf\u00d0\7(\2\2\u00d0\u00d1\5\60\31")
+        buf.write("\2\u00d1\u00d2\7+\2\2\u00d2\u00d3\b\r\1\2\u00d3\u00db")
+        buf.write("\3\2\2\2\u00d4\u00d5\7\17\2\2\u00d5\u00d6\7(\2\2\u00d6")
+        buf.write("\u00d7\5\22\n\2\u00d7\u00d8\7+\2\2\u00d8\u00d9\b\r\1\2")
+        buf.write("\u00d9\u00db\3\2\2\2\u00da\u00cb\3\2\2\2\u00da\u00d4\3")
+        buf.write("\2\2\2\u00db\31\3\2\2\2\u00dc\u00dd\5,\27\2\u00dd\u00de")
+        buf.write("\7\27\2\2\u00de\u00df\7(\2\2\u00df\u00e0\7+\2\2\u00e0")
+        buf.write("\u00e6\b\16\1\2\u00e1\u00e2\5*\26\2\u00e2\u00e3\b\16\1")
+        buf.write("\2\u00e3\u00e5\3\2\2\2\u00e4\u00e1\3\2\2\2\u00e5\u00e8")
+        buf.write("\3\2\2\2\u00e6\u00e4\3\2\2\2\u00e6\u00e7\3\2\2\2\u00e7")
+        buf.write("\u00ec\3\2\2\2\u00e8\u00e6\3\2\2\2\u00e9\u00ea\5\34\17")
+        buf.write("\2\u00ea\u00eb\b\16\1\2\u00eb\u00ed\3\2\2\2\u00ec\u00e9")
+        buf.write("\3\2\2\2\u00ec\u00ed\3\2\2\2\u00ed\u00f3\3\2\2\2\u00ee")
+        buf.write("\u00ef\5*\26\2\u00ef\u00f0\b\16\1\2\u00f0\u00f2\3\2\2")
+        buf.write("\2\u00f1\u00ee\3\2\2\2\u00f2\u00f5\3\2\2\2\u00f3\u00f1")
+        buf.write("\3\2\2\2\u00f3\u00f4\3\2\2\2\u00f4\u00fb\3\2\2\2\u00f5")
+        buf.write("\u00f3\3\2\2\2\u00f6\u00f7\5\"\22\2\u00f7\u00f8\b\16\1")
+        buf.write("\2\u00f8\u00fa\3\2\2\2\u00f9\u00f6\3\2\2\2\u00fa\u00fd")
+        buf.write("\3\2\2\2\u00fb\u00f9\3\2\2\2\u00fb\u00fc\3\2\2\2\u00fc")
+        buf.write("\u00fe\3\2\2\2\u00fd\u00fb\3\2\2\2\u00fe\u00ff\7\5\2\2")
+        buf.write("\u00ff\u0100\7+\2\2\u0100\33\3\2\2\2\u0101\u0102\5,\27")
+        buf.write("\2\u0102\u0103\7\30\2\2\u0103\u0104\5\22\n\2\u0104\u0105")
+        buf.write("\7+\2\2\u0105\u010b\b\17\1\2\u0106\u0107\5\36\20\2\u0107")
+        buf.write("\u0108\b\17\1\2\u0108\u010a\3\2\2\2\u0109\u0106\3\2\2")
+        buf.write("\2\u010a\u010d\3\2\2\2\u010b\u0109\3\2\2\2\u010b\u010c")
+        buf.write("\3\2\2\2\u010c\u010e\3\2\2\2\u010d\u010b\3\2\2\2\u010e")
+        buf.write("\u010f\7\5\2\2\u010f\u0110\7+\2\2\u0110\35\3\2\2\2\u0111")
+        buf.write("\u0112\5,\27\2\u0112\u0113\7\31\2\2\u0113\u0114\5 \21")
+        buf.write("\2\u0114\u0115\7+\2\2\u0115\u011e\b\20\1\2\u0116\u0117")
+        buf.write("\5\34\17\2\u0117\u0118\b\20\1\2\u0118\u011d\3\2\2\2\u0119")
+        buf.write("\u011a\5*\26\2\u011a\u011b\b\20\1\2\u011b\u011d\3\2\2")
+        buf.write("\2\u011c\u0116\3\2\2\2\u011c\u0119\3\2\2\2\u011d\u0120")
+        buf.write("\3\2\2\2\u011e\u011c\3\2\2\2\u011e\u011f\3\2\2\2\u011f")
+        buf.write("\37\3\2\2\2\u0120\u011e\3\2\2\2\u0121\u012d\b\21\1\2\u0122")
+        buf.write("\u0123\5\22\n\2\u0123\u012a\b\21\1\2\u0124\u0125\7\32")
+        buf.write("\2\2\u0125\u0126\5\22\n\2\u0126\u0127\b\21\1\2\u0127\u0129")
+        buf.write("\3\2\2\2\u0128\u0124\3\2\2\2\u0129\u012c\3\2\2\2\u012a")
+        buf.write("\u0128\3\2\2\2\u012a\u012b\3\2\2\2\u012b\u012e\3\2\2\2")
+        buf.write("\u012c\u012a\3\2\2\2\u012d\u0122\3\2\2\2\u012d\u012e\3")
+        buf.write("\2\2\2\u012e!\3\2\2\2\u012f\u0130\5$\23\2\u0130\u0136")
+        buf.write("\b\22\1\2\u0131\u0132\5(\25\2\u0132\u0133\b\22\1\2\u0133")
+        buf.write("\u0135\3\2\2\2\u0134\u0131\3\2\2\2\u0135\u0138\3\2\2\2")
+        buf.write("\u0136\u0134\3\2\2\2\u0136\u0137\3\2\2\2\u0137#\3\2\2")
+        buf.write("\2\u0138\u0136\3\2\2\2\u0139\u013a\7\33\2\2\u013a\u013b")
+        buf.write("\5&\24\2\u013b\u013c\5\22\n\2\u013c\u013d\7+\2\2\u013d")
+        buf.write("\u013e\b\23\1\2\u013e\u014c\3\2\2\2\u013f\u0140\7\33\2")
+        buf.write("\2\u0140\u0141\7\34\2\2\u0141\u0142\7+\2\2\u0142\u014c")
+        buf.write("\b\23\1\2\u0143\u0144\7\33\2\2\u0144\u0145\7\35\2\2\u0145")
+        buf.write("\u0146\7+\2\2\u0146\u014c\b\23\1\2\u0147\u0148\7\33\2")
+        buf.write("\2\u0148\u0149\7\36\2\2\u0149\u014a\7+\2\2\u014a\u014c")
+        buf.write("\b\23\1\2\u014b\u0139\3\2\2\2\u014b\u013f\3\2\2\2\u014b")
+        buf.write("\u0143\3\2\2\2\u014b\u0147\3\2\2\2\u014c%\3\2\2\2\u014d")
+        buf.write("\u014e\t\3\2\2\u014e\'\3\2\2\2\u014f\u0150\7$\2\2\u0150")
+        buf.write("\u0151\5\22\n\2\u0151\u0152\5\22\n\2\u0152\u0153\7+\2")
+        buf.write("\2\u0153\u0154\b\25\1\2\u0154)\3\2\2\2\u0155\u0156\7%")
+        buf.write("\2\2\u0156\u0157\5\22\n\2\u0157\u0158\5\22\n\2\u0158\u0159")
+        buf.write("\7+\2\2\u0159\u015a\b\26\1\2\u015a+\3\2\2\2\u015b\u0161")
+        buf.write("\b\27\1\2\u015c\u015d\5.\30\2\u015d\u015e\b\27\1\2\u015e")
+        buf.write("\u0160\3\2\2\2\u015f\u015c\3\2\2\2\u0160\u0163\3\2\2\2")
+        buf.write("\u0161\u015f\3\2\2\2\u0161\u0162\3\2\2\2\u0162-\3\2\2")
+        buf.write("\2\u0163\u0161\3\2\2\2\u0164\u0165\7&\2\2\u0165\u0166")
+        buf.write("\7(\2\2\u0166\u0167\b\30\1\2\u0167\u0168\5\60\31\2\u0168")
+        buf.write("\u0169\b\30\1\2\u0169\u016a\7+\2\2\u016a/\3\2\2\2\u016b")
+        buf.write("\u016c\7)\2\2\u016c\u0172\b\31\1\2\u016d\u016e\7*\2\2")
+        buf.write("\u016e\u0172\b\31\1\2\u016f\u0170\7\'\2\2\u0170\u0172")
+        buf.write("\b\31\1\2\u0171\u016b\3\2\2\2\u0171\u016d\3\2\2\2\u0171")
+        buf.write("\u016f\3\2\2\2\u0172\61\3\2\2\2\35\64;\\^gs\u008d\u00a3")
+        buf.write("\u00aa\u00b0\u00b9\u00c5\u00cd\u00da\u00e6\u00ec\u00f3")
+        buf.write("\u00fb\u010b\u011c\u011e\u012a\u012d\u0136\u014b\u0161")
+        buf.write("\u0171")
         return buf.getvalue()
 
 
@@ -462,20 +468,22 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 4, self.RULE_module)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 66
-            localctx._attr_stmts = self.attr_stmts()
+            global curr_module
             self.state = 67
-            self.match(rtlilParser.T__1)
+            localctx._attr_stmts = self.attr_stmts()
             self.state = 68
-            localctx._ID = self.match(rtlilParser.ID)
+            self.match(rtlilParser.T__1)
             self.state = 69
+            localctx._ID = self.match(rtlilParser.ID)
+            self.state = 70
             self.match(rtlilParser.EOL)
             localctx.m = Module((None if localctx._ID is None else localctx._ID.text), localctx._attr_stmts.a)
-            self.state = 71
-            self.module_body(localctx.m)
-            self.state = 72
-            self.match(rtlilParser.T__2)
+            curr_module = localctx.m
             self.state = 73
+            self.module_body(localctx.m)
+            self.state = 74
+            self.match(rtlilParser.T__2)
+            self.state = 75
             self.match(rtlilParser.EOL)
         except RecognitionException as re:
             localctx.exception = re
@@ -555,44 +563,44 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 90
+            self.state = 92
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << rtlilParser.T__3) | (1 << rtlilParser.T__4) | (1 << rtlilParser.T__12) | (1 << rtlilParser.T__18) | (1 << rtlilParser.T__20) | (1 << rtlilParser.T__35))) != 0):
-                self.state = 88
+                self.state = 90
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input,2,self._ctx)
                 if la_ == 1:
-                    self.state = 75
-                    self.param_stmt(m)
+                    self.state = 77
+                    self.param_stmt(localctx.m)
                     pass
 
                 elif la_ == 2:
-                    self.state = 76
+                    self.state = 78
                     localctx._wire = self.wire()
                     localctx.m.add_wire(localctx._wire.w)
                     pass
 
                 elif la_ == 3:
-                    self.state = 79
+                    self.state = 81
                     localctx._conn_stmt = self.conn_stmt()
                     localctx.m.add_connection(localctx._conn_stmt.c)
                     pass
 
                 elif la_ == 4:
-                    self.state = 82
+                    self.state = 84
                     localctx._cell = self.cell()
                     localctx.m.add_cell(localctx._cell.c)
                     pass
 
                 elif la_ == 5:
-                    self.state = 85
+                    self.state = 87
                     localctx._process = self.process()
                     localctx.m.add_process(localctx._process.p)
                     pass
 
 
-                self.state = 92
+                self.state = 94
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -647,21 +655,21 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 93
+            self.state = 95
             self.match(rtlilParser.T__3)
-            self.state = 94
+            self.state = 96
             localctx._ID = self.match(rtlilParser.ID)
             localctx.m.add_param((None if localctx._ID is None else localctx._ID.text))
-            self.state = 99
+            self.state = 101
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << rtlilParser.STRING) | (1 << rtlilParser.VALUE) | (1 << rtlilParser.INT))) != 0):
-                self.state = 96
+                self.state = 98
                 localctx._const = self.const()
                 localctx.m.set_param_val((None if localctx._ID is None else localctx._ID.text), localctx._const.c)
 
 
-            self.state = 101
+            self.state = 103
             self.match(rtlilParser.EOL)
         except RecognitionException as re:
             localctx.exception = re
@@ -723,24 +731,24 @@ class rtlilParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             localctx.opts = {}
-            self.state = 104
+            self.state = 106
             localctx._attr_stmts = self.attr_stmts()
-            self.state = 105
+            self.state = 107
             self.match(rtlilParser.T__4)
-            self.state = 111
+            self.state = 113
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << rtlilParser.T__5) | (1 << rtlilParser.T__6) | (1 << rtlilParser.T__7) | (1 << rtlilParser.T__8) | (1 << rtlilParser.T__9) | (1 << rtlilParser.T__10) | (1 << rtlilParser.T__11))) != 0):
-                self.state = 106
+                self.state = 108
                 localctx._wire_option = self.wire_option()
                 localctx.opts = {**localctx.opts, **localctx._wire_option.o}
-                self.state = 113
+                self.state = 115
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 114
+            self.state = 116
             localctx._ID = self.match(rtlilParser.ID)
-            self.state = 115
+            self.state = 117
             self.match(rtlilParser.EOL)
             localctx.w = Wire((None if localctx._ID is None else localctx._ID.text), localctx._attr_stmts.a, localctx.opts)
         except RecognitionException as re:
@@ -783,58 +791,58 @@ class rtlilParser ( Parser ):
         localctx = rtlilParser.Wire_optionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 12, self.RULE_wire_option)
         try:
-            self.state = 137
+            self.state = 139
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [rtlilParser.T__5]:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 118
+                self.state = 120
                 self.match(rtlilParser.T__5)
-                self.state = 119
+                self.state = 121
                 localctx._INT = self.match(rtlilParser.INT)
                 localctx.o = {"width": int((None if localctx._INT is None else localctx._INT.text))}
                 pass
             elif token in [rtlilParser.T__6]:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 121
+                self.state = 123
                 self.match(rtlilParser.T__6)
-                self.state = 122
+                self.state = 124
                 localctx._INT = self.match(rtlilParser.INT)
                 localctx.o = {"offset": int((None if localctx._INT is None else localctx._INT.text))}
                 pass
             elif token in [rtlilParser.T__7]:
                 self.enterOuterAlt(localctx, 3)
-                self.state = 124
+                self.state = 126
                 self.match(rtlilParser.T__7)
-                self.state = 125
+                self.state = 127
                 localctx._INT = self.match(rtlilParser.INT)
                 localctx.o = {"input": int((None if localctx._INT is None else localctx._INT.text))}
                 pass
             elif token in [rtlilParser.T__8]:
                 self.enterOuterAlt(localctx, 4)
-                self.state = 127
+                self.state = 129
                 self.match(rtlilParser.T__8)
-                self.state = 128
+                self.state = 130
                 localctx._INT = self.match(rtlilParser.INT)
                 localctx.o = {"output": int((None if localctx._INT is None else localctx._INT.text))}
                 pass
             elif token in [rtlilParser.T__9]:
                 self.enterOuterAlt(localctx, 5)
-                self.state = 130
+                self.state = 132
                 self.match(rtlilParser.T__9)
-                self.state = 131
+                self.state = 133
                 localctx._INT = self.match(rtlilParser.INT)
                 localctx.o = {"inout": int((None if localctx._INT is None else localctx._INT.text))}
                 pass
             elif token in [rtlilParser.T__10]:
                 self.enterOuterAlt(localctx, 6)
-                self.state = 133
+                self.state = 135
                 self.match(rtlilParser.T__10)
                 localctx.o = {"upto": 1}
                 pass
             elif token in [rtlilParser.T__11]:
                 self.enterOuterAlt(localctx, 7)
-                self.state = 135
+                self.state = 137
                 self.match(rtlilParser.T__11)
                 localctx.o = {"signed": 1}
                 pass
@@ -890,13 +898,13 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 14, self.RULE_conn_stmt)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 139
-            self.match(rtlilParser.T__12)
-            self.state = 140
-            localctx.s1 = self.sig_spec(0)
             self.state = 141
-            localctx.s2 = self.sig_spec(0)
+            self.match(rtlilParser.T__12)
             self.state = 142
+            localctx.s1 = self.sig_spec(0)
+            self.state = 143
+            localctx.s2 = self.sig_spec(0)
+            self.state = 144
             self.match(rtlilParser.EOL)
             localctx.c = Connection(localctx.s1.s, localctx.s2.s) 
         except RecognitionException as re:
@@ -966,33 +974,36 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 156
+            self.state = 161
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [rtlilParser.STRING, rtlilParser.VALUE, rtlilParser.INT]:
-                self.state = 146
+                self.state = 148
                 localctx._const = self.const()
-                localctx.s = SigSpec("const", localctx._const.c) 
+                localctx.s = SigSpec.const(localctx._const.c) 
                 pass
             elif token in [rtlilParser.ID]:
-                self.state = 149
+                self.state = 151
                 localctx._ID = self.match(rtlilParser.ID)
-                localctx.s = SigSpec("id", (None if localctx._ID is None else localctx._ID.text)) 
+                assert curr_module is not None
+                if (None if localctx._ID is None else localctx._ID.text) not in curr_module.wires:
+                  raise SystemError(f"Sigspec refers to wire '{(None if localctx._ID is None else localctx._ID.text)}' that is not present in its module") 
+                localctx.s = SigSpec.wire(curr_module.wires[(None if localctx._ID is None else localctx._ID.text)]) 
                 pass
             elif token in [rtlilParser.T__16]:
-                self.state = 151
+                self.state = 156
                 self.match(rtlilParser.T__16)
-                self.state = 152
+                self.state = 157
                 localctx._sig_specs = self.sig_specs()
-                self.state = 153
+                self.state = 158
                 self.match(rtlilParser.T__17)
-                localctx.s = SigSpec("concat", localctx._sig_specs.ss) 
+                localctx.s = SigSpec.concat(localctx._sig_specs.ss) 
                 pass
             else:
                 raise NoViableAltException(self)
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 169
+            self.state = 174
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,9,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -1003,28 +1014,28 @@ class rtlilParser ( Parser ):
                     localctx = rtlilParser.Sig_specContext(self, _parentctx, _parentState)
                     localctx.sig = _prevctx
                     self.pushNewRecursionContext(localctx, _startState, self.RULE_sig_spec)
-                    self.state = 158
+                    self.state = 163
                     if not self.precpred(self._ctx, 2):
                         from antlr4.error.Errors import FailedPredicateException
                         raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
-                    self.state = 159
+                    self.state = 164
                     self.match(rtlilParser.T__13)
-                    self.state = 160
+                    self.state = 165
                     localctx.st = self.match(rtlilParser.INT)
-                    self.state = 163
+                    self.state = 168
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if _la==rtlilParser.T__14:
-                        self.state = 161
+                        self.state = 166
                         self.match(rtlilParser.T__14)
-                        self.state = 162
+                        self.state = 167
                         localctx.end = self.match(rtlilParser.INT)
 
 
-                    self.state = 165
+                    self.state = 170
                     self.match(rtlilParser.T__15)
-                    localctx.s = SigSpec("slice", (localctx.sig.s, (None if localctx.st is None else localctx.st.text), (None if localctx.end is None else localctx.end.text)))  
-                self.state = 171
+                    localctx.s = SigSpec.slice(localctx.sig.s, (None if localctx.st is None else localctx.st.text), (None if localctx.end is None else localctx.end.text))  
+                self.state = 176
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,9,self._ctx)
 
@@ -1075,14 +1086,14 @@ class rtlilParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             localctx.ss = []
-            self.state = 178
+            self.state = 183
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << rtlilParser.T__16) | (1 << rtlilParser.STRING) | (1 << rtlilParser.ID) | (1 << rtlilParser.VALUE) | (1 << rtlilParser.INT))) != 0):
-                self.state = 173
+                self.state = 178
                 localctx._sig_spec = self.sig_spec(0)
                 localctx.ss.append(localctx._sig_spec.s)
-                self.state = 180
+                self.state = 185
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -1150,30 +1161,30 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 181
+            self.state = 186
             localctx._attr_stmts = self.attr_stmts()
-            self.state = 182
+            self.state = 187
             self.match(rtlilParser.T__18)
-            self.state = 183
+            self.state = 188
             localctx.name = self.match(rtlilParser.ID)
-            self.state = 184
+            self.state = 189
             localctx.typ = self.match(rtlilParser.ID)
-            self.state = 185
+            self.state = 190
             self.match(rtlilParser.EOL)
             localctx.c = Cell((None if localctx.name is None else localctx.name.text), (None if localctx.typ is None else localctx.typ.text), localctx._attr_stmts.a)
-            self.state = 190
+            self.state = 195
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==rtlilParser.T__3 or _la==rtlilParser.T__12:
-                self.state = 187
-                self.cell_body_stmt(localctx.c)
                 self.state = 192
+                self.cell_body_stmt(localctx.c)
+                self.state = 197
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 193
+            self.state = 198
             self.match(rtlilParser.T__2)
-            self.state = 194
+            self.state = 199
             self.match(rtlilParser.EOL)
         except RecognitionException as re:
             localctx.exception = re
@@ -1230,18 +1241,18 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 22, self.RULE_cell_body_stmt)
         self._la = 0 # Token type
         try:
-            self.state = 211
+            self.state = 216
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [rtlilParser.T__3]:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 196
+                self.state = 201
                 self.match(rtlilParser.T__3)
-                self.state = 198
+                self.state = 203
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==rtlilParser.T__11 or _la==rtlilParser.T__19:
-                    self.state = 197
+                    self.state = 202
                     _la = self._input.LA(1)
                     if not(_la==rtlilParser.T__11 or _la==rtlilParser.T__19):
                         self._errHandler.recoverInline(self)
@@ -1250,25 +1261,25 @@ class rtlilParser ( Parser ):
                         self.consume()
 
 
-                self.state = 200
+                self.state = 205
                 localctx._ID = self.match(rtlilParser.ID)
-                self.state = 201
+                self.state = 206
                 localctx._const = self.const()
-                self.state = 202
+                self.state = 207
                 self.match(rtlilParser.EOL)
                 localctx.c.add_param((None if localctx._ID is None else localctx._ID.text), localctx._const.c)
                 pass
             elif token in [rtlilParser.T__12]:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 205
+                self.state = 210
                 self.match(rtlilParser.T__12)
-                self.state = 206
+                self.state = 211
                 localctx._ID = self.match(rtlilParser.ID)
-                self.state = 207
+                self.state = 212
                 localctx._sig_spec = self.sig_spec(0)
-                self.state = 208
+                self.state = 213
                 self.match(rtlilParser.EOL)
-                localctx.c.add_port((None if localctx._ID is None else localctx._ID.text), localctx._sig_spec.s)
+                localctx.c.set_port((None if localctx._ID is None else localctx._ID.text), localctx._sig_spec.s)
                 pass
             else:
                 raise NoViableAltException(self)
@@ -1348,61 +1359,61 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 213
+            self.state = 218
             localctx._attr_stmts = self.attr_stmts()
-            self.state = 214
+            self.state = 219
             self.match(rtlilParser.T__20)
-            self.state = 215
+            self.state = 220
             localctx._ID = self.match(rtlilParser.ID)
-            self.state = 216
+            self.state = 221
             self.match(rtlilParser.EOL)
             localctx.p = Process((None if localctx._ID is None else localctx._ID.text), localctx._attr_stmts.a)
-            self.state = 223
+            self.state = 228
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,14,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
-                    self.state = 218
+                    self.state = 223
                     localctx.a1 = self.assign_stmt()
                     localctx.p.add_assignment(localctx.a1.s) 
-                self.state = 225
+                self.state = 230
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,14,self._ctx)
 
-            self.state = 229
+            self.state = 234
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==rtlilParser.T__21 or _la==rtlilParser.T__35:
-                self.state = 226
+                self.state = 231
                 localctx._switch = self.switch()
                 localctx.p.set_switch(localctx._switch.s)
 
 
-            self.state = 236
+            self.state = 241
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==rtlilParser.T__34:
-                self.state = 231
+                self.state = 236
                 localctx.a2 = self.assign_stmt()
                 localctx.p.add_assignment(localctx.a2.s)
-                self.state = 238
+                self.state = 243
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 244
+            self.state = 249
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==rtlilParser.T__24:
-                self.state = 239
+                self.state = 244
                 localctx._sync = self.sync()
                 localctx.p.add_sync(localctx._sync.s)
-                self.state = 246
+                self.state = 251
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 247
+            self.state = 252
             self.match(rtlilParser.T__2)
-            self.state = 248
+            self.state = 253
             self.match(rtlilParser.EOL)
         except RecognitionException as re:
             localctx.exception = re
@@ -1466,29 +1477,29 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 250
+            self.state = 255
             localctx._attr_stmts = self.attr_stmts()
-            self.state = 251
+            self.state = 256
             self.match(rtlilParser.T__21)
-            self.state = 252
+            self.state = 257
             localctx._sig_spec = self.sig_spec(0)
-            self.state = 253
+            self.state = 258
             self.match(rtlilParser.EOL)
             localctx.s = Switch(localctx._sig_spec.s, localctx._attr_stmts.a)
-            self.state = 260
+            self.state = 265
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==rtlilParser.T__22 or _la==rtlilParser.T__35:
-                self.state = 255
+                self.state = 260
                 localctx._case = self.case()
                 localctx.s.add_case(localctx._case.c)
-                self.state = 262
+                self.state = 267
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 263
+            self.state = 268
             self.match(rtlilParser.T__2)
-            self.state = 264
+            self.state = 269
             self.match(rtlilParser.EOL)
         except RecognitionException as re:
             localctx.exception = re
@@ -1556,37 +1567,37 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 28, self.RULE_case)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 266
+            self.state = 271
             localctx._attr_stmts = self.attr_stmts()
-            self.state = 267
+            self.state = 272
             self.match(rtlilParser.T__22)
-            self.state = 268
+            self.state = 273
             localctx._compare = self.compare()
-            self.state = 269
+            self.state = 274
             self.match(rtlilParser.EOL)
             localctx.c = Case(localctx._compare.ss, localctx._attr_stmts.a)
-            self.state = 279
+            self.state = 284
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,20,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
-                    self.state = 277
+                    self.state = 282
                     self._errHandler.sync(self)
                     token = self._input.LA(1)
                     if token in [rtlilParser.T__21, rtlilParser.T__35]:
-                        self.state = 271
+                        self.state = 276
                         localctx._switch = self.switch()
                         localctx.c.add_switch(localctx._switch.s)
                         pass
                     elif token in [rtlilParser.T__34]:
-                        self.state = 274
+                        self.state = 279
                         localctx._assign_stmt = self.assign_stmt()
                         localctx.c.add_assignment(localctx._assign_stmt.s)
                         pass
                     else:
                         raise NoViableAltException(self)
              
-                self.state = 281
+                self.state = 286
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,20,self._ctx)
 
@@ -1638,23 +1649,23 @@ class rtlilParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             localctx.ss = []
-            self.state = 294
+            self.state = 299
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << rtlilParser.T__16) | (1 << rtlilParser.STRING) | (1 << rtlilParser.ID) | (1 << rtlilParser.VALUE) | (1 << rtlilParser.INT))) != 0):
-                self.state = 283
+                self.state = 288
                 localctx.s1 = self.sig_spec(0)
                 localctx.ss.append(localctx.s1.s)
-                self.state = 291
+                self.state = 296
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while _la==rtlilParser.T__23:
-                    self.state = 285
+                    self.state = 290
                     self.match(rtlilParser.T__23)
-                    self.state = 286
+                    self.state = 291
                     localctx.s2 = self.sig_spec(0)
                     localctx.ss.append(localctx.s2.s)
-                    self.state = 293
+                    self.state = 298
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
@@ -1711,17 +1722,17 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 296
+            self.state = 301
             localctx._sync_stmt = self.sync_stmt()
             localctx.s = localctx._sync_stmt.s
-            self.state = 303
+            self.state = 308
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==rtlilParser.T__33:
-                self.state = 298
+                self.state = 303
                 localctx._update_stmt = self.update_stmt()
                 localctx.s.add_update(localctx._update_stmt.s)
-                self.state = 305
+                self.state = 310
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -1774,51 +1785,51 @@ class rtlilParser ( Parser ):
         localctx = rtlilParser.Sync_stmtContext(self, self._ctx, self.state)
         self.enterRule(localctx, 34, self.RULE_sync_stmt)
         try:
-            self.state = 324
+            self.state = 329
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,24,self._ctx)
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 306
+                self.state = 311
                 self.match(rtlilParser.T__24)
-                self.state = 307
+                self.state = 312
                 localctx._sync_type = self.sync_type()
-                self.state = 308
+                self.state = 313
                 localctx._sig_spec = self.sig_spec(0)
-                self.state = 309
+                self.state = 314
                 self.match(rtlilParser.EOL)
                 localctx.s = Sync((None if localctx._sync_type is None else self._input.getText(localctx._sync_type.start,localctx._sync_type.stop)), localctx._sig_spec.s)
                 pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 312
+                self.state = 317
                 self.match(rtlilParser.T__24)
-                self.state = 313
+                self.state = 318
                 self.match(rtlilParser.T__25)
-                self.state = 314
+                self.state = 319
                 self.match(rtlilParser.EOL)
                 localctx.s = Sync("global")
                 pass
 
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
-                self.state = 316
+                self.state = 321
                 self.match(rtlilParser.T__24)
-                self.state = 317
+                self.state = 322
                 self.match(rtlilParser.T__26)
-                self.state = 318
+                self.state = 323
                 self.match(rtlilParser.EOL)
                 localctx.s = Sync("init")
                 pass
 
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
-                self.state = 320
+                self.state = 325
                 self.match(rtlilParser.T__24)
-                self.state = 321
+                self.state = 326
                 self.match(rtlilParser.T__27)
-                self.state = 322
+                self.state = 327
                 self.match(rtlilParser.EOL)
                 localctx.s = Sync("always")
                 pass
@@ -1862,7 +1873,7 @@ class rtlilParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 326
+            self.state = 331
             _la = self._input.LA(1)
             if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << rtlilParser.T__28) | (1 << rtlilParser.T__29) | (1 << rtlilParser.T__30) | (1 << rtlilParser.T__31) | (1 << rtlilParser.T__32))) != 0)):
                 self._errHandler.recoverInline(self)
@@ -1918,13 +1929,13 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 38, self.RULE_update_stmt)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 328
+            self.state = 333
             self.match(rtlilParser.T__33)
-            self.state = 329
+            self.state = 334
             localctx.dest = self.sig_spec(0)
-            self.state = 330
+            self.state = 335
             localctx.src = self.sig_spec(0)
-            self.state = 331
+            self.state = 336
             self.match(rtlilParser.EOL)
             localctx.s = Assignment(localctx.dest.s, localctx.src.s)
         except RecognitionException as re:
@@ -1976,13 +1987,13 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 40, self.RULE_assign_stmt)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 334
+            self.state = 339
             self.match(rtlilParser.T__34)
-            self.state = 335
+            self.state = 340
             localctx.dest = self.sig_spec(0)
-            self.state = 336
+            self.state = 341
             localctx.src = self.sig_spec(0)
-            self.state = 337
+            self.state = 342
             self.match(rtlilParser.EOL)
             localctx.s = Assignment(localctx.dest.s, localctx.src.s)
         except RecognitionException as re:
@@ -2032,14 +2043,14 @@ class rtlilParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             localctx.a = {}
-            self.state = 346
+            self.state = 351
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==rtlilParser.T__35:
-                self.state = 341
+                self.state = 346
                 localctx._attr_stmt = self.attr_stmt()
                 localctx.a[localctx._attr_stmt.i] = localctx._attr_stmt.c
-                self.state = 348
+                self.state = 353
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -2093,15 +2104,15 @@ class rtlilParser ( Parser ):
         self.enterRule(localctx, 44, self.RULE_attr_stmt)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 349
+            self.state = 354
             self.match(rtlilParser.T__35)
-            self.state = 350
+            self.state = 355
             localctx._ID = self.match(rtlilParser.ID)
             localctx.i = (None if localctx._ID is None else localctx._ID.text)
-            self.state = 352
+            self.state = 357
             localctx._const = self.const()
             localctx.c = localctx._const.c
-            self.state = 354
+            self.state = 359
             self.match(rtlilParser.EOL)
         except RecognitionException as re:
             localctx.exception = re
@@ -2151,24 +2162,24 @@ class rtlilParser ( Parser ):
         localctx = rtlilParser.ConstContext(self, self._ctx, self.state)
         self.enterRule(localctx, 46, self.RULE_const)
         try:
-            self.state = 362
+            self.state = 367
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [rtlilParser.VALUE]:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 356
+                self.state = 361
                 localctx._VALUE = self.match(rtlilParser.VALUE)
                 localctx.c = ConstValue((None if localctx._VALUE is None else localctx._VALUE.text))
                 pass
             elif token in [rtlilParser.INT]:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 358
+                self.state = 363
                 localctx._INT = self.match(rtlilParser.INT)
                 localctx.c = ConstInt((None if localctx._INT is None else localctx._INT.text))
                 pass
             elif token in [rtlilParser.STRING]:
                 self.enterOuterAlt(localctx, 3)
-                self.state = 360
+                self.state = 365
                 localctx._STRING = self.match(rtlilParser.STRING)
                 localctx.c = ConstString((None if localctx._STRING is None else localctx._STRING.text))
                 pass

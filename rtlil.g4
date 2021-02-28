@@ -9,7 +9,11 @@
 
 grammar rtlil;
 
-@header {from rtlil import *}
+@header {
+from rtlil import *
+
+curr_module = None
+}
 
 file_ returns [ms]:
     {$ms = []}
@@ -21,14 +25,16 @@ file_ returns [ms]:
 autoidx_stmt : 'autoidx' INT EOL ;
 
 module returns [m]:
+    {global curr_module}
     attr_stmts
     'module' ID EOL {$m = Module($ID.text, $attr_stmts.a)}
+    {curr_module = $m}
     module_body[$m]
     'end' EOL
     ;
 
 module_body[m] : (
-    param_stmt[m]
+    param_stmt[$m]
     | wire {$m.add_wire($wire.w)}
     | conn_stmt {$m.add_connection($conn_stmt.c)}
     | cell {$m.add_cell($cell.c)}
@@ -62,14 +68,19 @@ wire_option returns [o]:
     ;
 
 conn_stmt returns [c]:
-    'connect' s1=sig_spec s2=sig_spec EOL {$c = Connection($s1.s, $s2.s) }
+    'connect' p=sig_spec w=sig_spec EOL {$c = Connection($p.s, $w.s) }
     ;
 
 sig_spec returns [s]:
-    const {$s = SigSpec("const", $const.c) }
-    | ID {$s = SigSpec("id", $ID.text) }
-    | <assoc=right> sig=sig_spec '[' st=INT (':' end=INT)? ']' {$s = SigSpec("slice", ($sig.s, $st.text, $end.text)) }
-    | '{' sig_specs '}' {$s = SigSpec("concat", $sig_specs.ss) }
+    const {$s = SigSpec.const($const.c) }
+    | ID 
+    {assert curr_module is not None}
+    {if $ID.text not in curr_module.wires:}
+    {  raise SystemError(f"Sigspec refers to wire '{$ID.text}' that is not present in its module") }
+    {$s = SigSpec.wire(curr_module.wires[$ID.text]) }
+    | <assoc=right> sig=sig_spec '[' st=INT (':' end=INT)? ']'
+      {$s = SigSpec.slice($sig.s, $st.text, $end.text) }
+    | '{' sig_specs '}' {$s = SigSpec.concat($sig_specs.ss) }
     ;
 
 sig_specs returns [ss]:
@@ -86,7 +97,7 @@ cell returns [c]:
 
 cell_body_stmt[c]:
     'parameter' ('signed' | 'real')? ID const EOL {$c.add_param($ID.text, $const.c)}
-    | 'connect' ID sig_spec EOL {$c.add_port($ID.text, $sig_spec.s)}
+    | 'connect' ID sig_spec EOL {$c.set_port($ID.text, $sig_spec.s)}
     ;
 
 process returns [p]:

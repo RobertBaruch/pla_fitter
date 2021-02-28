@@ -4,7 +4,11 @@ if __name__ is not None and "." in __name__:
     from .rtlilParser import rtlilParser
 else:
     from rtlilParser import rtlilParser
+
 from rtlil import *
+
+curr_module = None
+
 
 # This class defines a complete listener for a parse tree produced by rtlilParser.
 class rtlilListener(ParseTreeListener):
