@@ -108,7 +108,7 @@ class ParameterMixin(parameter_mixin_base):
 
 
 class Wire(AttributeMixin):
-    def __init__(self, id: str, attrs: Dict[str, Const], options: Dict[str, int] = {}):
+    def __init__(self, id: str, attrs: Dict[str, Const] = {}, options: Dict[str, int] = {}):
         self.id = id
         self.attrs = attrs
         self.options = options
@@ -189,7 +189,7 @@ class ConcatSigSpec(SigSpec):
         return s
 
     def is_wire(self) -> bool:
-        return False
+        return all([s.is_wire() for s in self.sigs])
 
     def __str__(self) -> str:
         ss = " ".join([str(s) for s in self.sigs])
@@ -214,13 +214,25 @@ class SliceSigSpec(SigSpec):
         return self.end - self.start
 
     def is_wire(self) -> bool:
-        return self.s.is_wire()
+        if isinstance(self.s, WireSigSpec):
+            return True
+        if isinstance(self.s, ConstSigSpec):
+            return False
+        # There really isn't any good way of determining this except
+        # by converting the underlying signal to bits, getting the
+        # range, and making sure every bit is from a wire.
+        end = self.end if self.end is not None else self.start + 1
+        bs = self.bits()[:end-self.start]
+        return all([s.is_wire() for s in bs])
 
     def __str__(self) -> str:
         end = f":{self.end}" if self.end is not None else ""
         return f"{self.s} [{self.start}{end}]"
 
     def bits(self) -> List["SigSpec"]:
+        end = self.end if self.end is not None else self.start + 1
+        if isinstance(self.s, ConcatSigSpec) or isinstance(self.s, SliceSigSpec):
+            return self.s.bits()[self.start:end]
         if self.end is None:
             return [self]
         return [SliceSigSpec(self.s, i) for i in range(self.start, self.end)]
@@ -413,3 +425,19 @@ class Module(AttributeMixin, ParameterMixin):
         procs = "".join([str(p) for p in self.processes.values()])
         connects = "".join(["  " + str(c) for c in self.connections])
         return f"{attrs}module {self.id}\n{params}{wires}{cells}{procs}{connects}end\n"
+
+
+if __name__ == "__main__":
+    m = Module("$1")
+    w = Wire("$2", options={"width": 4})
+    m.add_wire(w)
+    w2 = Wire("$3")
+    m.add_wire(w2)
+    con = ConstValue("3'101")
+    c = ConcatSigSpec([WireSigSpec(w), WireSigSpec(w2), ConstSigSpec(con)])
+    c2 = ConcatSigSpec([c, WireSigSpec(w)])
+    s = SliceSigSpec(c2, 9)
+    print(str(s))
+    print(f"Bits: {' '.join([str(a) for a in c2.bits()])}")
+    print([str(z) for z in s.bits()])
+    print(s.is_wire())
