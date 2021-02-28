@@ -39,8 +39,8 @@ class ConstValue(Const):
 
 
 class ConstInt(Const):
-    def __init__(self, val: str):
-        self.i = int(val)
+    def __init__(self, val: int):
+        self.i = val
 
     def __str__(self) -> str:
         return f"{self.i}"
@@ -70,10 +70,21 @@ else:
 
 
 class AttributeMixin(attribute_mixin_base):
-    def add_attribute(self, id: str, c: Const):
+    def set_attribute(self, id: str, c: Optional[Const]):
         if len(id) == 0 or (id[0] != '\\' and id[0] != '$'):
             raise SystemError("Invalid id. Must start with \\ or $")
-        self.attrs[id] = c
+        if c is None:
+            del self.attrs[id]
+        else:
+            self.attrs[id] = c
+
+    def set_bool_attribute(self, id: str, b: Optional[bool]):
+        """Sets a bool attribute.
+
+        Setting it to False is the same as setting it to None: it deletes
+        the attribute.
+        """
+        self.set_attribute(id, None if not b else ConstInt(1))
 
     def _attrs_str(self, indent: int) -> str:
         indents = "  " * indent

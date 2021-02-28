@@ -90,7 +90,7 @@ sig_specs returns [ss]:
 
 cell returns [c]:
     attr_stmts
-    'cell' typ=ID id=ID EOL {$c = Cell($typ.text, $id.text, $attr_stmts.a)}
+    'cell' typ=ID name=ID EOL {$c = Cell($typ.text, $name.text, $attr_stmts.a)}
     cell_body_stmt[$c]*
     'end' EOL
     ;
@@ -169,7 +169,11 @@ attr_stmt returns [i, c]:
     EOL
     ;
 
-const returns [c]: VALUE {$c = ConstValue($VALUE.text)} | INT {$c = ConstInt($INT.text)} | STRING {$c = ConstString($STRING.text)};
+const returns [c]: 
+    VALUE {$c = ConstValue($VALUE.text)} 
+    | INT {$c = ConstInt(int($INT.text))} 
+    | STRING {$c = ConstString($STRING.text)}
+    ;
 
 STRING: '"' .*? '"' ;
 ID: ('\\'|'$') [\u0021-\u00FF]+ ;

@@ -1114,8 +1114,8 @@ class rtlilParser ( Parser ):
             self.parser = parser
             self.c = None
             self._attr_stmts = None # Attr_stmtsContext
-            self.name = None # Token
             self.typ = None # Token
+            self.name = None # Token
 
         def attr_stmts(self):
             return self.getTypedRuleContext(rtlilParser.Attr_stmtsContext,0)
@@ -1166,12 +1166,12 @@ class rtlilParser ( Parser ):
             self.state = 187
             self.match(rtlilParser.T__18)
             self.state = 188
-            localctx.name = self.match(rtlilParser.ID)
-            self.state = 189
             localctx.typ = self.match(rtlilParser.ID)
+            self.state = 189
+            localctx.name = self.match(rtlilParser.ID)
             self.state = 190
             self.match(rtlilParser.EOL)
-            localctx.c = Cell((None if localctx.name is None else localctx.name.text), (None if localctx.typ is None else localctx.typ.text), localctx._attr_stmts.a)
+            localctx.c = Cell((None if localctx.typ is None else localctx.typ.text), (None if localctx.name is None else localctx.name.text), localctx._attr_stmts.a)
             self.state = 195
             self._errHandler.sync(self)
             _la = self._input.LA(1)
@@ -2175,7 +2175,7 @@ class rtlilParser ( Parser ):
                 self.enterOuterAlt(localctx, 2)
                 self.state = 363
                 localctx._INT = self.match(rtlilParser.INT)
-                localctx.c = ConstInt((None if localctx._INT is None else localctx._INT.text))
+                localctx.c = ConstInt(int((None if localctx._INT is None else localctx._INT.text)))
                 pass
             elif token in [rtlilParser.STRING]:
                 self.enterOuterAlt(localctx, 3)
