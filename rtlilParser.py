@@ -865,8 +865,8 @@ class rtlilParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
             self.c = None
-            self.s1 = None # Sig_specContext
-            self.s2 = None # Sig_specContext
+            self.p = None # Sig_specContext
+            self.w = None # Sig_specContext
 
         def EOL(self):
             return self.getToken(rtlilParser.EOL, 0)
@@ -901,12 +901,12 @@ class rtlilParser ( Parser ):
             self.state = 141
             self.match(rtlilParser.T__12)
             self.state = 142
-            localctx.s1 = self.sig_spec(0)
+            localctx.p = self.sig_spec(0)
             self.state = 143
-            localctx.s2 = self.sig_spec(0)
+            localctx.w = self.sig_spec(0)
             self.state = 144
             self.match(rtlilParser.EOL)
-            localctx.c = Connection(localctx.s1.s, localctx.s2.s) 
+            localctx.c = Connection(localctx.p.s, localctx.w.s) 
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -980,7 +980,7 @@ class rtlilParser ( Parser ):
             if token in [rtlilParser.STRING, rtlilParser.VALUE, rtlilParser.INT]:
                 self.state = 148
                 localctx._const = self.const()
-                localctx.s = SigSpec.const(localctx._const.c) 
+                localctx.s = ConstSigSpec(localctx._const.c) 
                 pass
             elif token in [rtlilParser.ID]:
                 self.state = 151
@@ -988,7 +988,7 @@ class rtlilParser ( Parser ):
                 assert curr_module is not None
                 if (None if localctx._ID is None else localctx._ID.text) not in curr_module.wires:
                   raise SystemError(f"Sigspec refers to wire '{(None if localctx._ID is None else localctx._ID.text)}' that is not present in its module") 
-                localctx.s = SigSpec.wire(curr_module.wires[(None if localctx._ID is None else localctx._ID.text)]) 
+                localctx.s = WireSigSpec(curr_module.wires[(None if localctx._ID is None else localctx._ID.text)]) 
                 pass
             elif token in [rtlilParser.T__16]:
                 self.state = 156
@@ -997,7 +997,7 @@ class rtlilParser ( Parser ):
                 localctx._sig_specs = self.sig_specs()
                 self.state = 158
                 self.match(rtlilParser.T__17)
-                localctx.s = SigSpec.concat(localctx._sig_specs.ss) 
+                localctx.s = ConcatSigSpec(localctx._sig_specs.ss) 
                 pass
             else:
                 raise NoViableAltException(self)
@@ -1034,7 +1034,7 @@ class rtlilParser ( Parser ):
 
                     self.state = 170
                     self.match(rtlilParser.T__15)
-                    localctx.s = SigSpec.slice(localctx.sig.s, (None if localctx.st is None else localctx.st.text), (None if localctx.end is None else localctx.end.text))  
+                    localctx.s = SliceSigSpec(localctx.sig.s, (None if localctx.st is None else localctx.st.text), (None if localctx.end is None else localctx.end.text))  
                 self.state = 176
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,9,self._ctx)

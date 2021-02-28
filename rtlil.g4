@@ -72,15 +72,15 @@ conn_stmt returns [c]:
     ;
 
 sig_spec returns [s]:
-    const {$s = SigSpec.const($const.c) }
+    const {$s = ConstSigSpec($const.c) }
     | ID 
     {assert curr_module is not None}
     {if $ID.text not in curr_module.wires:}
     {  raise SystemError(f"Sigspec refers to wire '{$ID.text}' that is not present in its module") }
-    {$s = SigSpec.wire(curr_module.wires[$ID.text]) }
+    {$s = WireSigSpec(curr_module.wires[$ID.text]) }
     | <assoc=right> sig=sig_spec '[' st=INT (':' end=INT)? ']'
-      {$s = SigSpec.slice($sig.s, $st.text, $end.text) }
-    | '{' sig_specs '}' {$s = SigSpec.concat($sig_specs.ss) }
+      {$s = SliceSigSpec($sig.s, $st.text, $end.text) }
+    | '{' sig_specs '}' {$s = ConcatSigSpec($sig_specs.ss) }
     ;
 
 sig_specs returns [ss]:
@@ -90,7 +90,7 @@ sig_specs returns [ss]:
 
 cell returns [c]:
     attr_stmts
-    'cell' name=ID typ=ID EOL {$c = Cell($name.text, $typ.text, $attr_stmts.a)}
+    'cell' typ=ID id=ID EOL {$c = Cell($typ.text, $id.text, $attr_stmts.a)}
     cell_body_stmt[$c]*
     'end' EOL
     ;

@@ -122,101 +122,108 @@ class Wire(AttributeMixin):
         return self.options.get("width", 1)
 
 
-class SigSpec:
-    def __init__(self, typ: str, val: Union[Const, List["SigSpec"], Wire, Tuple["SigSpec", int, Optional[int]]]):
-        self.typ = typ
-        self.val = val
-
-        if self.typ == "const":
-            if not isinstance(self.val, Const):
-                raise SystemError(
-                    "Sigspec specified as const, but value is not Const")
-
-        elif self.typ == "wire":
-            if not isinstance(self.val, Wire):
-                raise SystemError(
-                    "Sigspec specified as wire, but value is not Wire")
-
-        elif self.typ == "concat":
-            if not isinstance(self.val, List):
-                raise SystemError(
-                    "Sigspec specified as slice, but value is not List")
-
-        elif self.typ == "slice":
-            if not isinstance(self.val, tuple) or len(self.val) != 3:
-                raise SystemError(
-                    "Sigspec specified as concat, but value is not tuple of size 3")
-
-        else:
-            raise SystemError(
-                f"SigSpec of type '{typ}' is not const, wire, slice, or concat")
-
+class SigSpec(ABC):
+    @abstractmethod
     def __str__(self) -> str:
-        if self.typ == "const":
-            return f"{self.val}"
+        pass
 
-        if self.typ == "wire":
-            w: Wire = cast(Wire, self.val)
-            return f"{w.id}"
-
-        if self.typ == "slice":
-            t: Tuple[SigSpec, int, Optional[int]] = cast(
-                Tuple[SigSpec, int, Optional[int]], self.val)
-            end = f":{t[2]}" if t[2] is not None else ""
-            return f"{t[0]} [{t[1]}{end}]"
-
-        if self.typ == "concat":
-            l: List[SigSpec] = cast(List[SigSpec], self.val)
-            ss = " ".join([f"{s}" for s in l])
-            return "{" + ss + "}"
-
-        raise SystemError(f"Unknown type for sigspec: {self.typ}")
-
+    @abstractmethod
     def bits(self) -> List["SigSpec"]:
-        """Returns a list of SigSpecs guaranteed to be one bit wide."""
-        s = self.size()
-        if s == 1:
-            return [self]
-        return [SigSpec.slice(self, i) for i in range(s)]
+        pass
+
+    @abstractmethod
+    def size(self) -> int:
+        pass
+
+    @abstractmethod
+    def is_wire(self) -> bool:
+        pass
+
+
+class ConstSigSpec(SigSpec):
+    def __init__(self, c: Const):
+        self.c = c
 
     def size(self) -> int:
-        """Returns the size in bits of this sigspec."""
-        if self.typ == "const":
-            c: Const = cast(Const, self.val)
-            return c.size()
+        return self.c.size()
 
-        if self.typ == "wire":
-            w: Wire = cast(Wire, self.val)
-            return w.size()
+    def is_wire(self) -> bool:
+        return False
 
-        if self.typ == "slice":
-            sl: Tuple[SigSpec, int, int] = cast(
-                Tuple[SigSpec, int, int], self.val)
-            if sl[1] is None:
-                return 1
-            return sl[2] - sl[1]
+    def __str__(self) -> str:
+        return str(self.c)
 
+    def bits(self) -> List["SigSpec"]:
+        if self.size() == 1:
+            return [self]
+        return [SliceSigSpec(self, i) for i in range(self.size())]
+
+
+class WireSigSpec(SigSpec):
+    def __init__(self, w: Wire):
+        self.w = w
+
+    def size(self) -> int:
+        return self.w.size()
+
+    def is_wire(self) -> bool:
+        return True
+
+    def __str__(self) -> str:
+        return self.w.id
+
+    def bits(self) -> List["SigSpec"]:
+        if self.size() == 1:
+            return [self]
+        return [SliceSigSpec(self, i) for i in range(self.size())]
+
+
+class ConcatSigSpec(SigSpec):
+    def __init__(self, ss: List[SigSpec]):
+        self.sigs = ss
+
+    def size(self) -> int:
         s: int = 0
-        l: List[SigSpec] = cast(List[SigSpec], self.val)
-        for v in l:
+        for v in self.sigs:
             s += v.size()
         return s
 
-    @ classmethod
-    def const(cls, c: Const) -> "SigSpec":
-        return SigSpec("const", c)
+    def is_wire(self) -> bool:
+        return False
 
-    @ classmethod
-    def slice(cls, s: "SigSpec", start: int, end: Optional[int] = None) -> "SigSpec":
-        return SigSpec("slice", (s, start, end))
+    def __str__(self) -> str:
+        ss = " ".join([str(s) for s in self.sigs])
+        return "{" + ss + "}"
 
-    @ classmethod
-    def wire(cls, w: "Wire") -> "SigSpec":
-        return SigSpec("wire", w)
+    def bits(self) -> List["SigSpec"]:
+        ps = []
+        for s in self.sigs:
+            ps.extend(s.bits())
+        return ps
 
-    @ classmethod
-    def concat(cls, ss: List["SigSpec"]) -> "SigSpec":
-        return SigSpec("concat", ss)
+
+class SliceSigSpec(SigSpec):
+    def __init__(self, s: SigSpec, start: int, end: Optional[int] = None):
+        self.s = s
+        self.start = start
+        self.end = end
+
+    def size(self) -> int:
+        if self.end is None:
+            return 1
+        return self.end - self.start
+
+    def is_wire(self) -> bool:
+        return self.s.is_wire()
+
+    def __str__(self) -> str:
+        end = f":{self.end}" if self.end is not None else ""
+        return f"{self.s} [{self.start}{end}]"
+
+    def bits(self) -> List["SigSpec"]:
+        if self.end is None:
+            return [self]
+        return [SliceSigSpec(self.s, i) for i in range(self.start, self.end)]
 
 
 class Assignment:
@@ -307,7 +314,7 @@ class Cell(AttributeMixin, ParameterMixin):
         params = self._params_str(2)
         ports = "".join(
             [f"    connect {id} {s}\n" for id, s in self.ports.items()])
-        return f"{attrs}  cell {self.id} {self.typ}\n{params}{ports}  end\n"
+        return f"{attrs}  cell {self.typ} {self.id}\n{params}{ports}  end\n"
 
 
 class Sync:
